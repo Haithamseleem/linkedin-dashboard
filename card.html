@@ -146,11 +146,11 @@
     if (side === 'above') { n.style.left = `${Math.min(1080 - 340, Math.max(60, t.cx - 120))}px`; n.style.top = `${t.y - nb().h - 90}px`; }
     else if (side === 'below') { n.style.left = `${Math.min(1080 - 340, Math.max(60, t.cx - 60))}px`; n.style.top = `${t.y + t.h + 50}px`; }
     else if (side === 'below-right') { n.style.left = `${Math.min(1080 - 320, Math.max(t.x + 400, t.x + t.w - 300))}px`; n.style.top = `${t.y + t.h + 26}px`; }
-    else if (side === 'above-right') { n.classList.add('wide'); n.style.left = `${1080 - 80 - nb().w}px`; n.style.top = `${t.y - nb().h - 18}px`; }
+    else if (side === 'above-right') { n.classList.add('wide'); n.style.left = `${1080 - 80 - nb().w}px`; n.style.top = `${t.y - nb().h - 50}px`; }
     else { n.style.left = `${Math.min(1080 - 320, t.x + t.w + 50)}px`; n.style.top = `${t.cy - nb().h / 2 - 70}px`; }
     const b = nb();
     const from = side === 'above' ? [b.x + 60, b.y + b.h + 8] : side === 'below' ? [b.x + 40, b.y - 8] : side === 'below-right' ? [b.x - 6, b.y + 20] : side === 'above-right' ? [b.x - 12, b.y + b.h * 0.6] : [b.x - 8, b.y + b.h - 10];
-    const to = side === 'above' ? [t.cx, t.y - 12] : side === 'below' ? [t.cx, t.y + t.h + 12] : side === 'below-right' ? [b.x - 70, t.y + t.h + 14] : side === 'above-right' ? [Math.min(t.x + t.w * 0.8, b.x - 60), t.y - 4] : [t.x + t.w + 14, t.cy];
+    const to = side === 'above' ? [t.cx, t.y - 12] : side === 'below' ? [t.cx, t.y + t.h + 12] : side === 'below-right' ? [b.x - 70, t.y + t.h + 14] : side === 'above-right' ? [Math.min(t.x + t.w * 0.8, b.x - 60), t.y - 30] : [t.x + t.w + 14, t.cy];
     arrow(from[0], from[1], to[0], to[1], COL.note, side === 'right' ? -0.3 : side === 'above-right' ? 0.12 : 0.3);
   }
   function fit(node, max, min) {
