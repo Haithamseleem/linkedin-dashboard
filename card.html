@@ -232,7 +232,7 @@
         }
         const bad = rows.find((r) => r.it.flag === '!' || r.it.flag === '✕');
         if (bad) {
-          circleAround(bad.lbl, COL.note, 12, true);
+          circleAround(bad.lbl, COL.note, 24, true);
           note(d.note, bad.lbl, 'above-right');
         }
       };
