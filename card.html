@@ -384,7 +384,10 @@
     if (cta.textContent) { const b = box(cta, 6); draw(rcInk().ellipse(b.cx, b.cy, b.w * 1.08, b.h * 1.5, o({ stroke: COL.note, strokeWidth: 3.4, roughness: 1.7 }))); }
     flags.querySelectorAll('img').forEach((img) => { const b = box(img, 3); draw(rcInk().rectangle(b.x, b.y, b.w, b.h, o({ strokeWidth: 2.4, roughness: 1.6 }))); });
     if (after) after();
-    fit(document.getElementById('footer'), 28, 18);
+    const ft = document.getElementById('footer');
+    fit(ft, 28, 20);
+    if (ft.scrollWidth > ft.clientWidth + 1) ft.style.visibility = 'hidden';
+    else ft.style.visibility = '';
     window.cardReady = true;
   };
   const fromHash = () => { if (location.hash.length > 1) window.renderCard(JSON.parse(decodeURIComponent(location.hash.slice(1)))); };
