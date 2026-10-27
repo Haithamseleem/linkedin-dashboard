@@ -120,6 +120,9 @@ a { color: var(--accent-strong); }
 .mock .ft { margin-top: auto; font-size: 0.45em; color: rgba(220,230,245,0.8); }
 .post-card .thumb { font-size: 10px; }
 
+.card-preview { position: relative; width: 100%; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 10px; background: #0a1322; border: 1px solid var(--line); }
+.card-frame { position: absolute; top: 0; left: 0; width: 1080px; height: 1350px; border: 0; transform-origin: 0 0; pointer-events: none; }
+
 /* Status pills: icon + word, never colour alone */
 .pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 600; }
 .pill.draft { background: var(--warn-soft); color: var(--warn); }
