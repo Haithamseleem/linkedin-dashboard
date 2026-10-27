@@ -4,262 +4,358 @@
 <meta charset="utf-8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+<script src="card-assets/rough.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; }
   html, body { width: 1080px; height: 1350px; }
-  body { position: relative; overflow: hidden; background: var(--bg); color: var(--ink); font-family: Inter, "Segoe UI", system-ui, sans-serif; }
-  body.night { --bg: #0a1322; --ink: #ffffff; --sub: rgba(220,230,245,.8); --accent: #ffb23d; --accent2: #2f7bff; --soft: #3a5a8c; --soft2: #4f70a6; --line: rgba(47,123,255,.38); --bad: #ff5a4f; --warn: #ffb23d; --good: #3ccf8e; --panel: rgba(255,255,255,.06); --pline: rgba(255,255,255,.16); --glow1: rgba(47,123,255,.28); --glow2: rgba(255,178,61,.24); }
-  body.paper { --bg: #f4ecdf; --ink: #2f2118; --sub: #6b5442; --accent: #9a5b2e; --accent2: #c9935f; --soft: #dfc59c; --soft2: #b48d63; --line: rgba(139,90,51,.22); --bad: #b0412f; --warn: #b3741b; --good: #4f6b2c; --panel: #fffaf1; --pline: #dcc9ab; --glow1: rgba(201,147,95,.28); --glow2: rgba(154,91,46,.16); }
-  body.forest { --bg: #0e2620; --ink: #f6f1e4; --sub: rgba(232,226,206,.8); --accent: #e0b04f; --accent2: #4fa38a; --soft: #3b6d5d; --soft2: #4f8a76; --line: rgba(224,176,79,.26); --bad: #ff6b57; --warn: #e0b04f; --good: #7fd1a8; --panel: rgba(255,255,255,.06); --pline: rgba(255,255,255,.16); --glow1: rgba(79,163,138,.3); --glow2: rgba(224,176,79,.22); }
-  .glow { position: absolute; inset: 0; background: radial-gradient(900px 800px at 0% 0%, var(--glow1), transparent 60%), radial-gradient(900px 700px at 92% 98%, var(--glow2), transparent 60%); }
-  #grid { position: absolute; left: 0; bottom: 0; width: 1080px; height: 520px; }
-  #grid line { stroke: var(--line); stroke-width: 1.5; }
-  .top { position: absolute; left: 80px; right: 80px; top: 96px; display: flex; align-items: center; gap: 18px; }
-  .bar { width: 72px; height: 8px; border-radius: 4px; background: var(--accent); flex: none; }
-  .kicker { font-weight: 600; font-size: 32px; color: var(--accent); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .label { flex: none; border: 2px solid var(--pline); color: var(--ink); border-radius: 999px; padding: 8px 22px; font-weight: 700; font-size: 26px; letter-spacing: .01em; }
-  .headline { position: absolute; left: 80px; right: 80px; top: 168px; font-weight: 800; letter-spacing: -0.025em; line-height: 1.04; overflow: hidden; }
-  .headline em { font-style: normal; color: var(--accent); }
+  body { position: relative; overflow: hidden; background: var(--bg); color: var(--ink); font-family: Kalam, "Segoe Print", cursive; }
+  /* SAP blue #0070F2, SAP gold #F0AB00, Accenture purple #A100FF / #7500C0. Colours only, never logos. */
+  body.paper { --bg: #fbf8f2; --ink: #1f1d2b; --soft: #55526a; --hi: #f6c14d; --red: #c62828; --blue: #0070f2; --teal: #59a8f5; --brown: #7500c0; --yellow: #f0ab00; --note: #a100ff; --dot: rgba(31,29,43,.13); }
+  body.blueprint { --bg: #eaf2fd; --ink: #0b2a55; --soft: #3d5a80; --hi: #ffd36b; --red: #c62828; --blue: #0070f2; --teal: #4aa3f3; --brown: #7500c0; --yellow: #f0ab00; --note: #7500c0; --dot: rgba(0,112,242,.16); }
+  body.board { --bg: #1c0b33; --ink: #f4f1fa; --soft: #cfc6e0; --hi: #f0ab00; --red: #ff7b7b; --blue: #6cb6ff; --teal: #8fd0ff; --brown: #c38bff; --yellow: #f0ab00; --note: #d9a8ff; --dot: rgba(244,241,250,.06); }
+  #paper, #ink { position: absolute; left: 0; top: 0; }
+  #ink { pointer-events: none; overflow: visible; }
+  .top { position: absolute; left: 80px; right: 80px; top: 74px; display: flex; align-items: center; gap: 24px; }
+  .kicker { font-family: Caveat, cursive; font-weight: 700; font-size: 46px; color: var(--brown); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.board .kicker { color: var(--yellow); }
+  .label { flex: none; font-weight: 700; font-size: 28px; padding: 8px 22px; }
+  .headline { position: absolute; left: 80px; right: 80px; top: 152px; font-weight: 700; line-height: 1.08; overflow: hidden; letter-spacing: -0.01em; }
+  .headline em { font-style: normal; background: linear-gradient(176deg, transparent 50%, var(--hi) 50%, var(--hi) 90%, transparent 90%); padding: 0 8px; margin: 0 -8px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  body.board .headline em { background: none; color: var(--hi); }
   .content { position: absolute; left: 80px; right: 80px; }
-  .footer { position: absolute; left: 80px; right: 80px; bottom: 60px; display: flex; align-items: center; gap: 20px; font-size: 27px; font-weight: 500; color: var(--sub); }
-  .footer .ft { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .footer .cta { flex: none; font-weight: 700; color: var(--ink); background: var(--panel); border: 2px solid var(--pline); border-radius: 999px; padding: 10px 24px; }
-  svg.art { display: block; overflow: visible; }
-  .a { fill: var(--accent); } .b { fill: var(--accent2); } .s { fill: var(--soft); } .t { fill: var(--soft2); } .i { fill: var(--ink); } .k { fill: var(--bg); }
-  .ln { fill: none; stroke: var(--ink); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
-  .la { fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
-  .lb { fill: none; stroke: var(--accent2); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
-  .lt { fill: none; stroke: var(--soft2); stroke-width: 6; stroke-linecap: round; }
-  .tx { fill: var(--bg); font: 800 15px Inter, sans-serif; }
-
-  /* scene (question layout) */
-  .scene { position: absolute; left: 40px; right: 40px; bottom: 130px; height: 430px; }
-  .scene .route { position: absolute; inset: 0; }
-  .scene .route path { fill: none; stroke: var(--accent); stroke-width: 6; stroke-dasharray: 2 18; stroke-linecap: round; }
-  .scene .slot { position: absolute; bottom: 0; }
-  .badge { position: absolute; width: 74px; height: 74px; border-radius: 50%; background: var(--bad); color: #fff; display: grid; place-items: center; font: 800 44px Inter, sans-serif; box-shadow: 0 0 0 10px color-mix(in srgb, var(--bad) 25%, transparent); }
-
-  /* flow */
-  .steps { display: grid; gap: 26px; }
-  .step { display: grid; grid-template-columns: 150px 1fr; align-items: center; gap: 34px; position: relative; }
-  .step .node { width: 150px; height: 150px; border-radius: 50%; background: var(--panel); border: 4px solid var(--pline); display: grid; place-items: center; position: relative; }
-  .step.bad .node { border-color: var(--bad); box-shadow: 0 0 0 12px color-mix(in srgb, var(--bad) 20%, transparent); }
-  .step .node .badge { width: 54px; height: 54px; font-size: 32px; right: -10px; top: -10px; }
-  .step .lbl { font-size: 46px; font-weight: 700; line-height: 1.15; }
-  .step .sub { font-size: 30px; font-weight: 500; color: var(--sub); margin-top: 6px; }
-  .step:not(:last-child)::after { content: ""; position: absolute; left: 73px; top: 156px; height: 22px; border-left: 4px dashed var(--accent); }
-
-  /* checklist */
-  .checks { display: grid; gap: 24px; }
-  .check { display: grid; grid-template-columns: 64px 1fr; gap: 28px; align-items: center; background: var(--panel); border: 2px solid var(--pline); border-radius: 22px; padding: 22px 28px; }
-  .mark { width: 64px; height: 64px; border-radius: 16px; display: grid; place-items: center; font: 800 38px Inter, sans-serif; color: var(--bg); background: var(--good); }
-  .check.warn .mark { background: var(--warn); }
-  .check.bad .mark { background: var(--bad); color: #fff; }
-  .check .ct { font-size: 40px; font-weight: 600; line-height: 1.2; }
-
-  /* versus */
-  .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
-  .side { background: var(--panel); border: 3px solid var(--pline); border-radius: 28px; padding: 34px 30px; display: flex; flex-direction: column; align-items: flex-start; gap: 18px; min-height: 640px; }
-  .side.b { border-color: var(--accent); }
-  .side .st { font-size: 46px; font-weight: 800; letter-spacing: -0.01em; }
-  .side.b .st { color: var(--accent); }
-  .side .sx { font-size: 34px; font-weight: 500; line-height: 1.3; color: var(--sub); }
-  .vs-mid { position: absolute; left: 50%; top: 150px; transform: translateX(-50%); width: 92px; height: 92px; border-radius: 50%; background: var(--accent); color: var(--bg); display: grid; place-items: center; font: 800 34px Inter, sans-serif; }
-
-  /* system message */
-  .screen { background: var(--panel); border: 3px solid var(--pline); border-radius: 26px; overflow: hidden; }
-  .chrome { display: flex; align-items: center; gap: 12px; padding: 20px 26px; border-bottom: 2px solid var(--pline); font-size: 26px; font-weight: 700; color: var(--sub); }
-  .chrome i { width: 18px; height: 18px; border-radius: 50%; background: var(--pline); display: inline-block; }
-  .chrome span { margin-left: 10px; }
-  .form { padding: 30px 30px 12px; display: grid; gap: 18px; }
-  .frow { display: grid; grid-template-columns: 300px 1fr; gap: 22px; align-items: center; font-size: 32px; }
-  .frow .fl { color: var(--sub); font-weight: 600; }
-  .frow .fv { background: color-mix(in srgb, var(--bg) 55%, transparent); border: 2px solid var(--pline); border-radius: 12px; padding: 12px 18px; font-weight: 600; font-family: "Cascadia Mono", Consolas, monospace; font-size: 29px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .status { margin-top: 18px; display: grid; grid-template-columns: 60px 1fr; gap: 20px; align-items: center; padding: 24px 28px; background: color-mix(in srgb, var(--bad) 18%, transparent); border-top: 3px solid var(--bad); font-size: 34px; font-weight: 700; line-height: 1.25; }
-  .status.W { background: color-mix(in srgb, var(--warn) 18%, transparent); border-top-color: var(--warn); }
-  .status.S { background: color-mix(in srgb, var(--good) 18%, transparent); border-top-color: var(--good); }
-  .status .ico { width: 60px; height: 60px; border-radius: 50%; display: grid; place-items: center; font: 800 34px Inter, sans-serif; color: #fff; background: var(--bad); }
-  .status.W .ico { background: var(--warn); color: var(--bg); }
-  .status.S .ico { background: var(--good); color: var(--bg); }
-  .peek { position: absolute; right: 30px; bottom: 150px; }
+  .footer { position: absolute; left: 80px; right: 80px; bottom: 56px; display: flex; align-items: center; gap: 24px; }
+  .flags { display: flex; gap: 16px; flex: none; }
+  .flags img { width: 64px; height: 48px; display: block; }
+  .ft { flex: 1; font-size: 28px; color: var(--soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cta { flex: none; font-family: Caveat, cursive; font-weight: 700; font-size: 42px; padding: 0 18px; }
+  .note { position: absolute; font-family: Caveat, cursive; font-weight: 700; font-size: 44px; color: var(--note); line-height: 1.02; max-width: 300px; }
+  .art svg { display: block; overflow: visible; }
+  .steps { display: grid; gap: 40px; }
+  .step { display: grid; grid-template-columns: 150px 1fr; gap: 34px; align-items: center; }
+  .step .ico { width: 150px; height: 150px; display: grid; place-items: center; }
+  .step .lbl { font-size: 46px; font-weight: 700; line-height: 1.1; display: inline-block; }
+  .step .sub { font-family: Caveat, cursive; font-weight: 600; font-size: 38px; color: var(--soft); }
+  .checks { display: grid; gap: 30px; }
+  .check { display: grid; grid-template-columns: 64px 1fr; gap: 30px; align-items: center; }
+  .check .bx { width: 58px; height: 58px; }
+  .check .ct { font-size: 42px; line-height: 1.15; }
+  .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; }
+  .side { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
+  .side .st { font-size: 52px; font-weight: 700; line-height: 1.05; }
+  .side .sx { font-size: 36px; line-height: 1.25; }
+  .vsx { position: absolute; left: 50%; top: 96px; transform: translateX(-50%); font-family: Caveat, cursive; font-weight: 700; font-size: 56px; width: 100px; height: 100px; display: grid; place-items: center; }
+  .win .bar { height: 78px; display: flex; align-items: center; gap: 22px; padding: 0 30px; font-size: 32px; font-weight: 700; }
+  .win .dots { display: flex; gap: 14px; }
+  .win .dots i { width: 18px; height: 18px; display: block; }
+  .form { padding: 30px 34px 8px; display: grid; gap: 26px; }
+  .frow { display: grid; grid-template-columns: 290px 1fr; gap: 24px; font-size: 34px; align-items: end; }
+  .fl { color: var(--soft); }
+  .fv { font-weight: 700; padding: 0 6px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .status { margin: 28px 26px 28px; padding: 24px 28px 24px 108px; font-size: 36px; font-weight: 700; line-height: 1.2; position: relative; }
+  .status .ic { position: absolute; left: 26px; top: 50%; transform: translateY(-50%); width: 60px; height: 60px; display: grid; place-items: center; font-family: Caveat, cursive; font-size: 50px; }
 </style>
 </head>
-<body class="night">
-<div class="glow"></div>
-<svg id="grid" viewBox="0 0 1080 520" xmlns="http://www.w3.org/2000/svg"></svg>
-<div class="top"><div class="bar"></div><div class="kicker" id="kicker"></div><div class="label" id="label"></div></div>
-<div class="headline" id="headline"></div>
+<body class="paper">
+<svg id="paper" width="1080" height="1350" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+    <filter id="dust"><feGaussianBlur stdDeviation="40"/></filter>
+    <pattern id="dots" width="36" height="36" patternUnits="userSpaceOnUse"><circle cx="18" cy="18" r="1.7" style="fill: var(--dot)"/></pattern>
+    <pattern id="lines" width="45" height="45" patternUnits="userSpaceOnUse"><path d="M45 0H0V45" fill="none" style="stroke: var(--dot)" stroke-width="1.5"/></pattern>
+  </defs>
+  <rect width="1080" height="1350" style="fill: var(--bg)"/>
+  <rect id="dotgrid" width="1080" height="1350" fill="url(#dots)"/>
+  <rect id="linegrid" width="1080" height="1350" fill="url(#lines)"/>
+  <g id="chalkdust" opacity="0.1" filter="url(#dust)"><ellipse cx="260" cy="420" rx="300" ry="120" fill="#fff"/><ellipse cx="820" cy="980" rx="320" ry="140" fill="#fff"/></g>
+  <rect width="1080" height="1350" filter="url(#grain)" opacity="0.08"/>
+</svg>
+<div class="top"><div class="kicker" id="kicker"></div><div class="label" id="label"></div></div>
+<h1 class="headline" id="headline"></h1>
 <div class="content" id="content"></div>
-<div class="footer"><div class="ft" id="footer"></div><div class="cta" id="cta"></div></div>
+<div class="footer"><div class="flags" id="flags"></div><div class="ft" id="footer"></div><div class="cta" id="cta"></div></div>
+<svg id="ink" width="1080" height="1350" xmlns="http://www.w3.org/2000/svg"></svg>
 <script>
-  const SHAPES = {
-    agent: '<rect class="t" x="56" y="130" width="88" height="44" rx="20"/><rect class="s" x="88" y="112" width="24" height="22" rx="6"/><rect class="b" x="48" y="48" width="104" height="74" rx="26"/><rect class="k" x="62" y="64" width="76" height="40" rx="15"/><circle class="a" cx="86" cy="84" r="8"/><circle class="a" cx="114" cy="84" r="8"/><path class="ln" d="M100 48V30"/><circle class="a" cx="100" cy="24" r="8"/><rect class="a" x="40" y="74" width="10" height="22" rx="5"/><rect class="a" x="150" y="74" width="10" height="22" rx="5"/>',
-    orb: '<ellipse class="lb" cx="100" cy="100" rx="78" ry="26" transform="rotate(-20 100 100)"/><ellipse class="lb" cx="100" cy="100" rx="78" ry="26" transform="rotate(35 100 100)"/><circle class="a" cx="100" cy="100" r="34"/><circle class="k" cx="88" cy="90" r="9" opacity=".35"/>',
-    human: '<path class="t" d="M48 176c0-36 22-56 52-56s52 20 52 56z"/><circle class="s" cx="100" cy="80" r="32"/><path class="i" d="M66 78c0-22 14-36 34-36s34 14 34 36c-7-12-18-16-34-16s-27 4-34 16z" opacity=".9"/><path class="ln" d="M100 120v12"/><rect class="a" x="90" y="132" width="20" height="26" rx="4"/>',
-    ship: '<path class="t" d="M10 126h180l-24 38H36z"/><rect class="a" x="34" y="102" width="28" height="24"/><rect class="b" x="64" y="102" width="28" height="24"/><rect class="s" x="94" y="102" width="28" height="24"/><rect class="b" x="48" y="78" width="28" height="24"/><rect class="a" x="78" y="78" width="28" height="24"/><rect class="s" x="136" y="70" width="32" height="56" rx="4"/><rect class="k" x="142" y="80" width="20" height="9" rx="2"/><rect class="i" x="148" y="54" width="8" height="16"/><path class="lb" d="M6 180c12 0 12-6 24-6s12 6 24 6 12-6 24-6 12 6 24 6 12-6 24-6 12 6 24 6 12-6 24-6 12 6 24 6"/>',
-    truck: '<rect class="s" x="16" y="74" width="110" height="74" rx="7"/><rect class="a" x="26" y="86" width="90" height="12" rx="4"/><path class="b" d="M126 96h36l24 28v24h-60z"/><path class="k" d="M136 104h22l16 18h-38z"/><circle class="i" cx="50" cy="152" r="16"/><circle class="s" cx="50" cy="152" r="6"/><circle class="i" cx="156" cy="152" r="16"/><circle class="s" cx="156" cy="152" r="6"/>',
-    car: '<path class="b" d="M18 134c0-13 9-19 22-21l23-23c6-6 13-9 23-9h36c10 0 17 3 23 10l19 21c15 2 24 9 24 22v11H18z"/><path class="k" d="M70 96h26v19H52zM104 96h19c6 0 9 2 12 6l11 13h-42z"/><circle class="i" cx="56" cy="146" r="16"/><circle class="s" cx="56" cy="146" r="6"/><circle class="i" cx="150" cy="146" r="16"/><circle class="s" cx="150" cy="146" r="6"/><rect class="a" x="166" y="122" width="14" height="8" rx="3"/>',
-    plane: '<path class="b" d="M18 104c0-6 8-10 20-10h112c20 0 36 4 36 10s-16 10-36 10H38c-12 0-20-4-20-10z"/><path class="a" d="M96 96L66 46h20l44 50zM96 112l-30 50h20l44-50z"/><path class="a" d="M30 96l-12-28h14l20 28z"/><circle class="k" cx="160" cy="104" r="5"/><circle class="k" cx="142" cy="104" r="5"/><circle class="k" cx="124" cy="104" r="5"/>',
-    warehouse: '<path class="t" d="M22 86l78-38 78 38v86H22z"/><path class="b" d="M12 90l88-48 88 48-9 9-79-42-79 42z"/><rect class="s" x="44" y="112" width="50" height="60"/><path class="lt" d="M44 126h50M44 140h50M44 154h50"/><rect class="a" x="110" y="140" width="30" height="32" rx="2"/><rect class="a" x="144" y="148" width="24" height="24" rx="2"/><rect class="s" x="124" y="118" width="26" height="22" rx="2"/>',
-    factory: '<path class="t" d="M18 174V98l40 24V98l40 24V98l40 24V64h24v110z"/><rect class="a" x="32" y="138" width="22" height="18" rx="2"/><rect class="a" x="72" y="138" width="22" height="18" rx="2"/><rect class="a" x="112" y="138" width="22" height="18" rx="2"/><rect class="b" x="140" y="44" width="18" height="22"/><circle class="s" cx="160" cy="32" r="10" opacity=".8"/><circle class="s" cx="176" cy="20" r="7" opacity=".6"/>',
-    po: '<path class="s" d="M46 20h78l32 32v128H46z"/><path class="t" d="M124 20v32h32z"/><rect class="b" x="60" y="38" width="48" height="22" rx="5"/><text class="tx" x="84" y="55" text-anchor="middle">PO</text><path class="lt" d="M62 82h78M62 102h78M62 122h54"/><circle class="la" cx="124" cy="152" r="18"/><path class="la" d="M116 152l6 6 11-12"/>',
-    invoice: '<path class="s" d="M46 20h108v160l-14-10-14 10-14-10-14 10-14-10-14 10-14-10-14 10z"/><rect class="b" x="60" y="36" width="54" height="22" rx="5"/><text class="tx" x="87" y="53" text-anchor="middle">INV</text><path class="lt" d="M62 80h76M62 98h76M62 116h50"/><rect class="a" x="62" y="134" width="76" height="16" rx="4"/>',
-    box: '<path class="t" d="M100 40l66 33v74l-66 33-66-33V73z"/><path class="s" d="M100 40l66 33-66 33-66-33z"/><path class="b" d="M100 106l66-33v74l-66 33z"/><path class="a" d="M74 53l66 33v22l-13 6V92L61 59z"/>',
-    shield: '<path class="b" d="M100 22l62 23v47c0 41-27 70-62 86-35-16-62-45-62-86V45z"/><path class="k" opacity=".22" d="M100 38l46 17v37c0 31-20 54-46 66z"/><path class="la" stroke-width="13" d="M72 100l20 20 38-42"/>',
-    calendar: '<rect class="s" x="34" y="44" width="132" height="126" rx="14"/><path class="b" d="M34 58c0-8 6-14 14-14h104c8 0 14 6 14 14v22H34z"/><rect class="i" x="64" y="28" width="12" height="30" rx="6"/><rect class="i" x="124" y="28" width="12" height="30" rx="6"/><rect class="t" x="50" y="94" width="22" height="18" rx="4"/><rect class="t" x="78" y="94" width="22" height="18" rx="4"/><rect class="t" x="106" y="94" width="22" height="18" rx="4"/><rect class="t" x="134" y="94" width="22" height="18" rx="4"/><rect class="t" x="50" y="120" width="22" height="18" rx="4"/><rect class="t" x="78" y="120" width="22" height="18" rx="4"/><rect class="a" x="106" y="120" width="22" height="18" rx="4"/><rect class="t" x="134" y="120" width="22" height="18" rx="4"/><rect class="t" x="50" y="146" width="22" height="16" rx="4"/><rect class="t" x="78" y="146" width="22" height="16" rx="4"/>',
-    cart: '<path class="b" d="M60 70h110l-15 54H74z"/><rect class="a" x="84" y="50" width="26" height="28" rx="4"/><rect class="s" x="114" y="42" width="24" height="36" rx="4"/><path class="ln" stroke-width="8" d="M20 42h26l22 92h88"/><circle class="i" cx="82" cy="156" r="13"/><circle class="i" cx="146" cy="156" r="13"/>',
-    data: '<path class="t" d="M44 46v100c0 11 25 20 56 20s56-9 56-20V46"/><ellipse class="b" cx="100" cy="46" rx="56" ry="20"/><path class="la" d="M44 80c0 11 25 20 56 20s56-9 56-20M44 114c0 11 25 20 56 20s56-9 56-20"/>',
-    chart: '<rect class="s" x="32" y="110" width="30" height="60" rx="5"/><rect class="b" x="74" y="84" width="30" height="86" rx="5"/><rect class="a" x="116" y="54" width="30" height="116" rx="5"/><path class="la" stroke-width="8" d="M30 92l42-28 42 6 46-42"/><path class="a" d="M150 20l26 2-6 25z"/>',
-  };
-  const shape = (name, size) => `<svg class="art" width="${size}" height="${size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">${SHAPES[name] || SHAPES.orb}</svg>`;
+  const NS = 'http://www.w3.org/2000/svg';
+  const FLAGS = ['ae', 'sa', 'qa', 'kw', 'om', 'bh', 'eg'];
+  let COL = {};
+  let seed = 7;
+  const o = (x = {}) => ({ roughness: 1.35, bowing: 1.1, strokeWidth: 3.2, stroke: COL.ink, fillStyle: 'hachure', hachureGap: 9, fillWeight: 2.2, hachureAngle: -41, seed: seed++, ...x });
+  const solid = (fill, x = {}) => o({ fill, fillStyle: 'solid', ...x });
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const svgText = (x, y, t, size, color) => { const n = document.createElementNS(NS, 'text'); n.setAttribute('x', x); n.setAttribute('y', y); n.setAttribute('text-anchor', 'middle'); n.setAttribute('font-family', 'Caveat, cursive'); n.setAttribute('font-weight', '700'); n.setAttribute('font-size', size); n.setAttribute('fill', color || COL.ink); n.textContent = t; return n; };
+
+  const SHAPES = {
+    human: (r, c) => [r.path('M52 180 C52 130 72 108 100 108 C128 108 148 130 148 180 Z', o({ fill: c.blue })), r.circle(100, 66, 52, o({ fill: c.brown, hachureAngle: 60 })), r.path('M74 60 C78 36 122 36 126 60', o({ strokeWidth: 5 })), r.rectangle(90, 136, 20, 26, solid(c.yellow))],
+    agent: (r, c) => [r.line(100, 46, 100, 26, o()), r.circle(100, 20, 18, solid(c.yellow)), r.rectangle(52, 46, 96, 70, o({ fill: c.teal })), r.circle(80, 80, 18, solid(c.ink)), r.circle(120, 80, 18, solid(c.ink)), r.line(86, 102, 114, 102, o()), r.path('M60 180 L66 128 L134 128 L140 180 Z', o({ fill: c.teal, hachureAngle: 50 })), svgText(100, 166, 'AI', 34)],
+    ship: (r, c) => [r.polygon([[14, 128], [186, 128], [164, 166], [38, 166]], o({ fill: c.blue })), r.rectangle(36, 100, 30, 28, o({ fill: c.red })), r.rectangle(68, 100, 30, 28, o({ fill: c.yellow })), r.rectangle(100, 100, 30, 28, o({ fill: c.teal })), r.rectangle(52, 72, 30, 28, o({ fill: c.yellow })), r.rectangle(84, 72, 30, 28, o({ fill: c.red })), r.rectangle(138, 74, 30, 54, o()), r.rectangle(144, 84, 18, 10, solid(c.ink)), r.line(152, 74, 152, 54, o()), r.path('M6 184 C18 176 30 192 42 184 S66 176 78 184 S102 192 114 184 S138 176 150 184 S174 192 194 184', o({ stroke: c.blue, strokeWidth: 3 }))],
+    truck: (r, c) => [r.rectangle(14, 72, 112, 74, o({ fill: c.yellow })), r.polygon([[126, 94], [160, 94], [186, 122], [186, 146], [126, 146]], o({ fill: c.red })), r.polygon([[136, 102], [156, 102], [174, 120], [136, 120]], solid(c.bg)), r.circle(50, 152, 30, solid(c.ink)), r.circle(156, 152, 30, solid(c.ink))],
+    car: (r, c) => [r.path('M18 142 L22 118 Q28 110 44 108 L66 86 Q72 80 84 80 L122 80 Q134 80 140 88 L162 108 Q180 110 184 124 L186 142 Z', o({ fill: c.blue })), r.polygon([[72, 92], [96, 92], [96, 108], [58, 108]], solid(c.bg)), r.polygon([[104, 92], [124, 92], [140, 108], [104, 108]], solid(c.bg)), r.circle(58, 144, 30, solid(c.ink)), r.circle(148, 144, 30, solid(c.ink))],
+    plane: (r, c) => [r.ellipse(100, 104, 170, 32, o({ fill: c.blue })), r.polygon([[92, 98], [62, 46], [84, 46], [126, 98]], o({ fill: c.teal })), r.polygon([[92, 110], [62, 162], [84, 162], [126, 110]], o({ fill: c.teal })), r.polygon([[22, 98], [12, 68], [30, 68], [48, 98]], o({ fill: c.teal })), r.circle(150, 102, 9, o()), r.circle(132, 102, 9, o()), r.circle(114, 102, 9, o())],
+    warehouse: (r, c) => [r.polygon([[22, 88], [100, 46], [178, 88], [178, 178], [22, 178]], o({ fill: c.brown })), r.rectangle(44, 114, 54, 64, solid(c.bg)), r.line(44, 130, 98, 130, o({ strokeWidth: 2 })), r.line(44, 146, 98, 146, o({ strokeWidth: 2 })), r.line(44, 162, 98, 162, o({ strokeWidth: 2 })), r.rectangle(112, 142, 30, 36, o({ fill: c.yellow })), r.rectangle(146, 150, 24, 28, o({ fill: c.yellow })), r.rectangle(124, 116, 28, 26, o({ fill: c.yellow }))],
+    factory: (r, c) => [r.polygon([[18, 178], [18, 98], [58, 122], [58, 98], [98, 122], [98, 98], [138, 122], [138, 62], [164, 62], [164, 178]], o({ fill: c.brown })), r.rectangle(32, 140, 22, 18, solid(c.yellow)), r.rectangle(72, 140, 22, 18, solid(c.yellow)), r.rectangle(112, 140, 22, 18, solid(c.yellow)), r.circle(152, 44, 22, o()), r.circle(172, 22, 14, o())],
+    po: (r, c) => [r.path('M44 18 L124 18 L158 52 L158 182 L44 182 Z', solid(c.bg)), r.path('M124 18 L124 52 L158 52', o()), r.rectangle(58, 34, 52, 26, o({ fill: c.blue })), svgText(84, 56, 'PO', 30), r.line(60, 84, 142, 84, o({ strokeWidth: 2.4 })), r.line(60, 104, 142, 104, o({ strokeWidth: 2.4 })), r.line(60, 124, 116, 124, o({ strokeWidth: 2.4 })), r.circle(126, 154, 42, o({ stroke: c.red })), r.path('M110 154 L121 165 L141 142', o({ stroke: c.red, strokeWidth: 4.5 }))],
+    invoice: (r, c) => [r.path('M44 18 L156 18 L156 182 L142 172 L128 182 L114 172 L100 182 L86 172 L72 182 L58 172 L44 182 Z', solid(c.bg)), r.rectangle(58, 34, 60, 26, o({ fill: c.teal })), svgText(88, 56, 'INV', 28), r.line(60, 84, 140, 84, o({ strokeWidth: 2.4 })), r.line(60, 104, 140, 104, o({ strokeWidth: 2.4 })), r.line(60, 124, 112, 124, o({ strokeWidth: 2.4 })), r.rectangle(60, 140, 80, 18, o({ fill: c.yellow }))],
+    box: (r, c) => [r.polygon([[100, 40], [166, 72], [100, 104], [34, 72]], o({ fill: c.yellow, hachureAngle: 20 })), r.polygon([[34, 72], [100, 104], [100, 178], [34, 146]], o({ fill: c.brown, hachureAngle: -60 })), r.polygon([[100, 104], [166, 72], [166, 146], [100, 178]], o({ fill: c.brown, hachureAngle: 60 })), r.line(67, 56, 133, 88, o({ stroke: c.red, strokeWidth: 6 }))],
+    shield: (r, c) => [r.path('M100 22 L160 44 L160 92 C160 132 134 160 100 178 C66 160 40 132 40 92 L40 44 Z', o({ fill: c.teal })), r.path('M72 98 L92 118 L130 76', o({ strokeWidth: 9 }))],
+    calendar: (r, c) => [r.rectangle(34, 46, 132, 126, solid(c.bg)), r.rectangle(34, 46, 132, 34, o({ fill: c.red })), r.line(68, 28, 68, 60, o({ strokeWidth: 6 })), r.line(132, 28, 132, 60, o({ strokeWidth: 6 })), r.line(34, 112, 166, 112, o({ strokeWidth: 2 })), r.line(34, 142, 166, 142, o({ strokeWidth: 2 })), r.line(67, 80, 67, 172, o({ strokeWidth: 2 })), r.line(100, 80, 100, 172, o({ strokeWidth: 2 })), r.line(133, 80, 133, 172, o({ strokeWidth: 2 })), r.ellipse(116, 128, 44, 40, o({ stroke: c.red, strokeWidth: 4.5 }))],
+    cart: (r, c) => [r.polygon([[58, 70], [174, 70], [158, 128], [74, 128]], o({ fill: c.yellow, hachureGap: 13 })), r.path('M16 42 L44 42 L72 142 L162 142', o({ strokeWidth: 5 })), r.circle(84, 162, 26, solid(c.ink)), r.circle(150, 162, 26, solid(c.ink))],
+    data: (r, c) => [r.path('M44 46 L44 150 C44 174 156 174 156 150 L156 46', o({ fill: c.blue })), r.ellipse(100, 46, 112, 38, o({ fill: c.teal, fillStyle: 'cross-hatch' })), r.path('M44 82 C44 106 156 106 156 82', o()), r.path('M44 116 C44 140 156 140 156 116', o())],
+    chart: (r, c) => [r.rectangle(32, 110, 30, 62, o({ fill: c.teal })), r.rectangle(74, 84, 30, 88, o({ fill: c.blue })), r.rectangle(116, 54, 30, 118, o({ fill: c.red })), r.line(18, 174, 182, 174, o()), r.path('M28 96 L72 66 L114 72 L162 30', o({ strokeWidth: 4 })), r.path('M146 28 L164 28 L162 46', o({ strokeWidth: 4 }))],
+  };
+  SHAPES.orb = SHAPES.agent;
+
+  function shape(name, size) {
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 200 200');
+    svg.setAttribute('width', size);
+    svg.setAttribute('height', size);
+    const rc = rough.svg(svg);
+    (SHAPES[name] || SHAPES.agent)(rc, COL).forEach((n) => svg.appendChild(n));
+    const wrap = el('div', 'art');
+    wrap.append(svg);
+    return wrap;
+  }
+
+  const ink = () => document.getElementById('ink');
+  const rcInk = () => rough.svg(ink());
+  const box = (node, pad = 0) => { const b = node.getBoundingClientRect(); return { x: b.left - pad, y: b.top - pad, w: b.width + pad * 2, h: b.height + pad * 2, cx: b.left + b.width / 2, cy: b.top + b.height / 2 }; };
+  const draw = (n) => ink().appendChild(n);
+  function arrow(x1, y1, x2, y2, color, bend = 0.25) {
+    const r = rcInk();
+    const mx = (x1 + x2) / 2 - (y2 - y1) * bend, my = (y1 + y2) / 2 + (x2 - x1) * bend;
+    draw(r.curve([[x1, y1], [mx, my], [x2, y2]], o({ stroke: color || COL.ink, strokeWidth: 3.6 })));
+    const a = Math.atan2(y2 - my, x2 - mx), L = 22;
+    draw(r.line(x2, y2, x2 - L * Math.cos(a - 0.45), y2 - L * Math.sin(a - 0.45), o({ stroke: color || COL.ink, strokeWidth: 3.6 })));
+    draw(r.line(x2, y2, x2 - L * Math.cos(a + 0.45), y2 - L * Math.sin(a + 0.45), o({ stroke: color || COL.ink, strokeWidth: 3.6 })));
+  }
+  function circleAround(node, color, pad = 16) {
+    const b = box(node, pad);
+    draw(rcInk().ellipse(b.cx, b.cy, b.w * 1.12, b.h * 1.25, o({ stroke: color, strokeWidth: 4.2, roughness: 1.8 })));
+  }
+  function note(text, target, side) {
+    if (!text) return;
+    const n = el('div', 'note', text);
+    document.body.append(n);
+    const t = box(target);
+    const nb = () => box(n);
+    if (side === 'above') { n.style.left = `${Math.min(1080 - 340, Math.max(60, t.cx - 120))}px`; n.style.top = `${t.y - nb().h - 90}px`; }
+    else if (side === 'below') { n.style.left = `${Math.min(1080 - 340, Math.max(60, t.cx - 60))}px`; n.style.top = `${t.y + t.h + 50}px`; }
+    else if (side === 'below-right') { n.style.left = `${Math.min(1080 - 320, Math.max(t.x + 400, t.x + t.w - 300))}px`; n.style.top = `${t.y + t.h + 26}px`; }
+    else { n.style.left = `${Math.min(1080 - 320, t.x + t.w + 50)}px`; n.style.top = `${t.cy - nb().h / 2 - 70}px`; }
+    const b = nb();
+    const from = side === 'above' ? [b.x + 60, b.y + b.h + 8] : side === 'below' ? [b.x + 40, b.y - 8] : side === 'below-right' ? [b.x - 6, b.y + 20] : [b.x - 8, b.y + b.h - 10];
+    const to = side === 'above' ? [t.cx, t.y - 12] : side === 'below' ? [t.cx, t.y + t.h + 12] : side === 'below-right' ? [b.x - 70, t.y + t.h + 14] : [t.x + t.w + 14, t.cy];
+    arrow(from[0], from[1], to[0], to[1], COL.note, side === 'right' ? -0.3 : 0.3);
+  }
+  function fit(node, max, min) {
+    let s = max;
+    node.style.fontSize = `${s}px`;
+    while (s > min && (node.scrollHeight > node.clientHeight + 1 || node.scrollWidth > node.clientWidth + 1)) { s -= 2; node.style.fontSize = `${s}px`; }
+  }
+  function headline(text, height, max, min, right = 80) {
+    const h = document.getElementById('headline');
+    h.replaceChildren();
+    String(text || '').split(/(\*[^*]+\*)/).forEach((p) => h.append(/^\*[^*]+\*$/.test(p) ? el('em', '', p.slice(1, -1)) : document.createTextNode(p)));
+    h.style.height = `${height}px`;
+    h.style.right = `${right}px`;
+    fit(h, max, min);
+    return h;
+  }
   const parseItem = (raw) => {
-    let s = String(raw).trim(); let flag = '';
+    let s = String(raw).trim();
+    let flag = '';
     if (/^[!✕✓]/.test(s)) { flag = s[0]; s = s.slice(1).trim(); }
     const m = s.match(/^([a-z]+):\s*(.*)$/);
     const art = m && SHAPES[m[1]] ? m[1] : null;
     const text = art ? m[2] : s;
-    const [label, sub] = text.split(/\s+—\s+|\s+-\s+(?=\S)/);
+    const [label, sub] = text.split(/\s+—\s+/);
     return { flag, art, text, label, sub };
   };
-  function fit(node, max, min) {
-    let size = max;
-    node.style.fontSize = size + 'px';
-    while (size > min && (node.scrollHeight > node.clientHeight + 1 || node.scrollWidth > node.clientWidth + 1)) { size -= 2; node.style.fontSize = size + 'px'; }
-  }
-  function headline(text) {
-    const h = document.getElementById('headline');
-    h.replaceChildren();
-    String(text || '').split(/(\*[^*]+\*)/).forEach((p) => h.append(/^\*[^*]+\*$/.test(p) ? el('em', '', p.slice(1, -1)) : document.createTextNode(p)));
-    return h;
-  }
-  function peekTopRight(h, art) {
-    if (!art) return;
-    h.style.right = '300px';
-    const p = el('div', 'peek');
-    p.style.top = '180px'; p.style.right = '80px'; p.style.bottom = 'auto';
-    const first = parseItem(String(art).split(',')[0]);
-    p.innerHTML = shape(first.art || first.text, 200);
-    document.body.append(p);
-  }
-  function drawGrid() {
-    const g = document.getElementById('grid');
-    const H = 520;
-    let s = '';
-    for (let j = -14; j <= 14; j++) s += `<line x1="540" y1="0" x2="${540 + j * 150}" y2="${H}"/>`;
-    for (let k = 0; k < 15; k++) { const y = H / (1 + 0.45 * k); s += `<line x1="0" y1="${y}" x2="1080" y2="${y}"/>`; }
-    g.innerHTML = `<defs><linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="1"/></linearGradient><mask id="m"><rect width="1080" height="${H}" fill="url(#fade)"/></mask></defs><g mask="url(#m)">${s}</g>`;
+  function sideArt(d) {
+    if (!d.art) return 80;
+    const first = parseItem(String(d.art).split(',')[0]);
+    const a = shape(first.art || first.text, 230);
+    a.style.position = 'absolute';
+    a.style.right = '70px';
+    a.style.top = '150px';
+    document.body.append(a);
+    return 330;
   }
 
   const LAYOUTS = {
-    question(c, d, items) {
-      const h = headline(d.headline);
-      h.style.height = '600px';
-      const arts = String(d.art || 'agent').split(',').map((x) => x.trim()).filter(Boolean).slice(0, 3);
-      const scene = el('div', 'scene');
-      const n = arts.length;
-      const size = n === 1 ? 400 : n === 2 ? 340 : 300;
-      const span = 1000;
-      const xs = arts.map((_, i) => (n === 1 ? span - size - 40 : (span - size) * (i / (n - 1))));
-      if (n > 1) {
-        const pts = xs.map((x) => `${x + size / 2},${430 - size * 0.55}`);
-        scene.insertAdjacentHTML('beforeend', `<svg class="route" viewBox="0 0 1000 430" preserveAspectRatio="none"><path d="M${pts.join(' L')}"/></svg>`);
-      }
-      arts.forEach((raw, i) => {
-        const it = parseItem(raw);
-        const slot = el('div', 'slot');
-        slot.style.left = `${xs[i]}px`;
-        slot.innerHTML = shape(it.art || it.text, size);
-        if (it.flag === '!' || it.flag === '✕') { const b = el('div', 'badge', '✕'); b.style.right = '10px'; b.style.top = '-10px'; slot.append(b); }
-        scene.append(slot);
-      });
-      document.body.append(scene);
-      fit(h, 150, 72);
+    question(c, d) {
+      headline(d.headline, 560, 140, 72);
+      const arts = String(d.art || 'agent').split(',').map((x) => parseItem(x)).slice(0, 3);
+      const size = arts.length === 1 ? 380 : arts.length === 2 ? 320 : 270;
+      const row = el('div');
+      Object.assign(row.style, { position: 'absolute', left: '60px', right: '60px', top: '740px', display: 'flex', justifyContent: arts.length === 1 ? 'flex-end' : 'space-between', alignItems: 'flex-end', height: '400px' });
+      const nodes = arts.map((it) => { const a = shape(it.art || it.text, size); row.append(a); return { a, it }; });
+      document.body.append(row);
+      return () => {
+        for (let i = 0; i < nodes.length - 1; i++) {
+          const p = box(nodes[i].a), q = box(nodes[i + 1].a);
+          arrow(p.x + p.w * 0.75, p.y + 10, q.x + q.w * 0.25, q.y + 10, COL.ink, -0.25);
+        }
+        const bad = nodes.find((n) => n.it.flag === '!' || n.it.flag === '✕');
+        if (bad) { circleAround(bad.a, COL.note, 6); note(d.note || 'it breaks here', bad.a, 'above'); }
+      };
     },
     flow(c, d, items) {
-      const h = headline(d.headline);
-      h.style.height = '280px';
-      c.style.top = '480px';
+      headline(d.headline, 270, 100, 58);
+      c.style.top = '470px';
       const list = el('div', 'steps');
-      items.slice(0, 5).forEach((raw) => {
+      const rows = items.slice(0, 4).map((raw) => {
         const it = parseItem(raw);
-        const row = el('div', `step${it.flag === '!' || it.flag === '✕' ? ' bad' : ''}`);
-        const node = el('div', 'node');
-        node.innerHTML = shape(it.art || 'po', 110);
-        if (row.classList.contains('bad')) node.append(el('div', 'badge', '✕'));
+        const row = el('div', 'step');
+        const ico = el('div', 'ico');
+        ico.append(shape(it.art || 'po', 130));
         const txt = el('div');
-        txt.append(el('div', 'lbl', it.label), it.sub ? el('div', 'sub', it.sub) : '');
-        row.append(node, txt);
+        const lbl = el('div', 'lbl', it.label);
+        txt.append(lbl);
+        if (it.sub) txt.append(el('div', 'sub', it.sub));
+        row.append(ico, txt);
         list.append(row);
+        return { ico, lbl, it };
       });
       c.append(list);
-      fit(h, 104, 60);
-      if (items.length > 4) list.style.gap = '14px';
+      return () => {
+        rows.forEach(({ ico }) => { const b = box(ico, 4); draw(rcInk().circle(b.cx, b.cy, b.w * 1.02, o({ strokeWidth: 3 }))); });
+        for (let i = 0; i < rows.length - 1; i++) {
+          const p = box(rows[i].ico), q = box(rows[i + 1].ico);
+          arrow(p.cx - 30, p.y + p.h + 6, q.cx - 30, q.y - 6, COL.ink, 0.35);
+        }
+        const bad = rows.find((r) => r.it.flag === '!' || r.it.flag === '✕');
+        if (bad) {
+          circleAround(bad.lbl, COL.note, 10);
+          const lb = box(bad.lbl);
+          note(d.note, bad.lbl, lb.x + lb.w + 360 > 1080 ? 'below-right' : 'right');
+        }
+      };
     },
     checklist(c, d, items) {
-      const h = headline(d.headline);
-      h.style.height = '300px';
+      const right = sideArt(d);
+      headline(d.headline, 300, 100, 58, right);
       c.style.top = '500px';
       const list = el('div', 'checks');
-      items.slice(0, 5).forEach((raw) => {
+      const rows = items.slice(0, 5).map((raw) => {
         const it = parseItem(raw);
-        const cls = it.flag === '!' ? ' warn' : it.flag === '✕' ? ' bad' : '';
-        const row = el('div', `check${cls}`);
-        row.append(el('div', 'mark', it.flag === '!' ? '!' : it.flag === '✕' ? '✕' : '✓'), el('div', 'ct', it.text));
+        const row = el('div', 'check');
+        const bx = el('div', 'bx');
+        const ct = el('div', 'ct', it.text);
+        row.append(bx, ct);
         list.append(row);
+        return { bx, ct, it };
       });
       c.append(list);
-      peekTopRight(h, d.art);
-      fit(h, 100, 58);
-      list.querySelectorAll('.ct').forEach((n) => { n.style.maxHeight = '100px'; n.style.overflow = 'hidden'; fit(n, 40, 28); });
+      return () => {
+        rows.forEach(({ bx, ct, it }) => {
+          const b = box(bx);
+          draw(rcInk().rectangle(b.x, b.y, b.w, b.h, o({ strokeWidth: 3 })));
+          if (it.flag === '!') {
+            draw(rcInk().line(b.cx, b.y + 10, b.cx, b.y + b.h - 22, o({ stroke: COL.yellow, strokeWidth: 7 })));
+            draw(rcInk().circle(b.cx, b.y + b.h - 10, 7, solid(COL.yellow, { stroke: COL.yellow })));
+          } else if (it.flag === '✕') {
+            draw(rcInk().line(b.x + 10, b.y + 10, b.x + b.w - 10, b.y + b.h - 10, o({ stroke: COL.red, strokeWidth: 6 })));
+            draw(rcInk().line(b.x + b.w - 10, b.y + 10, b.x + 10, b.y + b.h - 10, o({ stroke: COL.red, strokeWidth: 6 })));
+          } else {
+            draw(rcInk().path(`M${b.x + 8} ${b.cy} L${b.x + 24} ${b.y + b.h - 6} L${b.x + b.w + 12} ${b.y - 14}`, o({ stroke: COL.blue, strokeWidth: 7 })));
+          }
+          if (it.flag === '!' || it.flag === '✕') {
+            const t = box(ct);
+            draw(rcInk().line(t.x, t.y + t.h - 4, t.x + Math.min(t.w, 720), t.y + t.h - 4, o({ stroke: COL.note, strokeWidth: 4 })));
+          }
+        });
+        const warn = rows.find((r) => r.it.flag === '!' || r.it.flag === '✕');
+        if (warn && d.note) note(d.note, warn.ct, 'below');
+      };
     },
     versus(c, d, items) {
-      const h = headline(d.headline);
-      h.style.height = '260px';
+      headline(d.headline, 260, 104, 60);
       c.style.top = '470px';
       const grid = el('div', 'vs');
-      [[0, 'a'], [2, 'b']].forEach(([i, cls]) => {
+      const sides = [0, 2].map((i, k) => {
         const t = parseItem(items[i] || '');
-        const side = el('div', `side ${cls}`);
-        side.insertAdjacentHTML('beforeend', shape(t.art || (cls === 'a' ? 'human' : 'agent'), 230));
-        side.append(el('div', 'st', t.label || t.text), el('div', 'sx', items[i + 1] || ''));
+        const side = el('div', 'side');
+        side.append(shape(t.art || (k ? 'agent' : 'human'), 240));
+        const st = el('div', 'st', t.label || t.text);
+        side.append(st, el('div', 'sx', items[i + 1] || ''));
         grid.append(side);
+        return { st };
       });
-      c.append(grid);
-      c.append(el('div', 'vs-mid', 'VS'));
-      fit(h, 100, 58);
-      grid.querySelectorAll('.sx').forEach((n) => { n.style.maxHeight = '260px'; n.style.overflow = 'hidden'; fit(n, 34, 24); });
+      const v = el('div', 'vsx', 'vs');
+      c.append(grid, v);
+      return () => {
+        const g = box(grid);
+        draw(rcInk().line(g.cx, g.y + 130, g.cx + 6, g.y + g.h, o({ strokeWidth: 3 })));
+        const vb = box(v);
+        draw(rcInk().circle(vb.cx, vb.cy, 96, o({ fill: COL.hi, fillStyle: 'solid', strokeWidth: 3 })));
+        ink().appendChild(svgText(vb.cx, vb.cy + 18, 'vs', 56));
+        const s = box(sides[1].st, 2);
+        draw(rcInk().line(s.x, s.y + s.h, s.x + s.w, s.y + s.h + 4, o({ stroke: COL.note, strokeWidth: 5 })));
+        if (d.note) note(d.note, sides[1].st, 'below');
+      };
     },
     alert(c, d, items) {
-      const h = headline(d.headline);
-      h.style.height = '280px';
-      c.style.top = '500px';
+      const right = sideArt(d);
+      headline(d.headline, 290, 100, 58, right);
+      c.style.top = '490px';
       const [type = 'E', msg = '', ...rows] = items;
-      const screen = el('div', 'screen');
-      const chrome = el('div', 'chrome');
-      chrome.append(el('i'), el('i'), el('i'), el('span', '', d.label || 'System message'));
+      const win = el('div', 'win');
+      const bar = el('div', 'bar');
+      const dots = el('div', 'dots');
+      const dd = [el('i'), el('i'), el('i')];
+      dots.append(...dd);
+      bar.append(dots, el('span', '', d.label || 'System'));
       const form = el('div', 'form');
-      rows.slice(0, 4).forEach((r) => {
+      const vals = rows.slice(0, 4).map((r) => {
         const [k, ...v] = r.split(':');
         const row = el('div', 'frow');
-        row.append(el('div', 'fl', k.trim()), el('div', 'fv', v.join(':').trim()));
+        const fv = el('div', 'fv', v.join(':').trim());
+        row.append(el('div', 'fl', k.trim()), fv);
         form.append(row);
+        return fv;
       });
       const t = String(type).trim().toUpperCase()[0] || 'E';
-      const status = el('div', `status ${t}`);
-      status.append(el('div', 'ico', t === 'S' ? '✓' : t === 'W' ? '!' : '✕'), el('div', '', msg));
-      screen.append(chrome, form, status);
-      c.append(screen);
-      peekTopRight(h, d.art);
-      fit(h, 100, 58);
+      const status = el('div', 'status');
+      const ic = el('div', 'ic', t === 'S' ? '✓' : '!');
+      status.append(ic, el('span', '', msg));
+      win.append(bar, form, status);
+      c.append(win);
+      return () => {
+        const w = box(win);
+        draw(rcInk().rectangle(w.x, w.y, w.w, w.h, o({ strokeWidth: 3.6 })));
+        const b = box(bar);
+        draw(rcInk().line(w.x, b.y + b.h, w.x + w.w, b.y + b.h, o({ strokeWidth: 3 })));
+        dd.forEach((i) => { const x = box(i); draw(rcInk().circle(x.cx, x.cy, 18, o({ strokeWidth: 2.5 }))); });
+        vals.forEach((v) => { const x = box(v); draw(rcInk().line(x.x, x.y + x.h, x.x + x.w, x.y + x.h, o({ strokeWidth: 2.4 }))); });
+        const s = box(status);
+        const tone = t === 'S' ? COL.blue : t === 'W' ? COL.yellow : COL.red;
+        draw(rcInk().rectangle(s.x, s.y, s.w, s.h, solid(COL.hi, { stroke: tone, strokeWidth: 6 })));
+        status.style.position = 'relative';
+        status.style.zIndex = '2';
+        const ib = box(ic);
+        draw(rcInk().circle(ib.cx, ib.cy, 64, solid(tone, { strokeWidth: 3 })));
+        ic.style.color = COL.bg;
+        if (d.note) note(d.note, status, 'below');
+      };
     },
   };
 
   window.renderCard = async (d) => {
-    document.querySelectorAll('.scene, .peek').forEach((n) => n.remove());
-    const theme = ['night', 'paper', 'forest'].includes(d.theme) ? d.theme : 'night';
+    document.querySelectorAll('.note, body > .art, body > div[style]').forEach((n) => { if (!n.classList.contains('content')) n.remove(); });
+    ink().replaceChildren();
+    const alias = { kraft: 'blueprint', chalk: 'board', night: 'board', forest: 'board' };
+    const theme = ['paper', 'blueprint', 'board'].includes(d.theme) ? d.theme : alias[d.theme] || 'paper';
     document.body.className = theme;
+    document.getElementById('dotgrid').style.display = theme === 'paper' ? '' : 'none';
+    document.getElementById('linegrid').style.display = theme === 'blueprint' ? '' : 'none';
+    document.getElementById('chalkdust').style.display = theme === 'board' ? '' : 'none';
+    const s = getComputedStyle(document.body);
+    COL = Object.fromEntries(['ink', 'soft', 'hi', 'red', 'blue', 'teal', 'brown', 'yellow', 'note', 'bg'].map((k) => [k, s.getPropertyValue(`--${k}`).trim()]));
+    seed = 7 + String(d.headline || '').length;
+    await Promise.all([document.fonts.load('700 40px Kalam'), document.fonts.load('400 40px Kalam'), document.fonts.load('700 40px Caveat')]).catch(() => {});
+    await document.fonts.ready;
     document.getElementById('kicker').textContent = d.kicker || '';
     const label = document.getElementById('label');
     label.textContent = d.label || '';
@@ -268,15 +364,29 @@
     const cta = document.getElementById('cta');
     cta.textContent = d.cta || '';
     cta.hidden = !d.cta;
+    const flags = document.getElementById('flags');
+    flags.replaceChildren(...String(d.flags || '').split(',').map((x) => x.trim().toLowerCase()).filter((x) => FLAGS.includes(x)).slice(0, 4).map((code, i) => {
+      const img = el('img');
+      img.src = `card-assets/flags/${code}.svg`;
+      img.alt = code;
+      img.style.transform = `rotate(${[-4, 3, -2, 4][i]}deg)`;
+      return img;
+    }));
+    await Promise.all([...flags.querySelectorAll('img')].map((img) => (img.complete ? null : new Promise((r) => { img.onload = img.onerror = r; }))));
     const c = document.getElementById('content');
     c.replaceChildren();
     c.style.top = '';
     const items = String(d.items || '').split('|').map((x) => x.trim()).filter(Boolean);
     const layout = LAYOUTS[d.layout] ? d.layout : 'question';
-    await document.fonts.ready;
-    LAYOUTS[layout](c, d, items);
+    const after = LAYOUTS[layout](c, d, items);
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    if (label.textContent) { const b = box(label); draw(rcInk().rectangle(b.x, b.y, b.w, b.h, o({ strokeWidth: 3 }))); }
+    if (cta.textContent) { const b = box(cta, 6); draw(rcInk().ellipse(b.cx, b.cy, b.w * 1.08, b.h * 1.5, o({ stroke: COL.note, strokeWidth: 3.4, roughness: 1.7 }))); }
+    flags.querySelectorAll('img').forEach((img) => { const b = box(img, 3); draw(rcInk().rectangle(b.x, b.y, b.w, b.h, o({ strokeWidth: 2.4, roughness: 1.6 }))); });
+    if (after) after();
+    fit(document.getElementById('footer'), 28, 18);
+    window.cardReady = true;
   };
-  drawGrid();
   const fromHash = () => { if (location.hash.length > 1) window.renderCard(JSON.parse(decodeURIComponent(location.hash.slice(1)))); };
   window.addEventListener('hashchange', fromHash);
   fromHash();

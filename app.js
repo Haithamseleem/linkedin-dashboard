@@ -416,8 +416,8 @@ function openEditor(doc) {
   const isNew = !doc;
   const editable = isNew || doc.meta.status === 'draft' || doc.meta.status === 'skipped';
   const meta = isNew
-    ? { status: 'draft', created: todayLocal(), angle: '', image_mode: 'card', image_file: '', image_layout: 'question', image_theme: 'night', image_art: 'agent', image_items: '', image_label: '', image_kicker: '', image_headline: '', image_footer: '', image_cta: '', lint: '', postGroupId: '', scheduledTime: '', postedId: '' }
-    : { image_layout: 'question', image_theme: 'night', image_art: '', image_items: '', image_label: '', image_cta: '', ...doc.meta };
+    ? { status: 'draft', created: todayLocal(), angle: '', image_mode: 'card', image_file: '', image_layout: 'question', image_theme: 'paper', image_art: 'agent', image_items: '', image_label: '', image_flags: '', image_note: '', image_kicker: '', image_headline: '', image_footer: '', image_cta: '', lint: '', postGroupId: '', scheduledTime: '', postedId: '' }
+    : { image_layout: 'question', image_theme: 'paper', image_art: '', image_items: '', image_label: '', image_flags: '', image_note: '', image_cta: '', ...doc.meta };
   const root = document.getElementById('drawer-root');
   const close = () => { root.replaceChildren(); document.removeEventListener('keydown', onKey); };
   const onKey = (e) => { if (e.key === 'Escape') close(); };
@@ -440,7 +440,7 @@ function openEditor(doc) {
   itemsBox.addEventListener('input', () => { meta.image_items = itemsBox.value.split('\n').map((l) => l.trim()).filter(Boolean).join('|'); refreshPreview(); });
   const frame = h('iframe', { class: 'card-frame', title: 'Image preview', tabindex: '-1' });
   const preview = editable ? h('div', { class: 'card-preview' }, frame) : h('div');
-  const cardData = () => ({ layout: meta.image_layout, theme: meta.image_theme, art: meta.image_art, items: meta.image_items, label: meta.image_label, cta: meta.image_cta, kicker: meta.image_kicker, headline: meta.image_headline, footer: meta.image_footer });
+  const cardData = () => ({ layout: meta.image_layout, theme: meta.image_theme, art: meta.image_art, items: meta.image_items, label: meta.image_label, flags: meta.image_flags, note: meta.image_note, cta: meta.image_cta, kicker: meta.image_kicker, headline: meta.image_headline, footer: meta.image_footer });
   let timer;
   const refreshPreview = () => {
     if (!editable) { preview.replaceChildren(thumb(doc)); return; }
@@ -464,9 +464,11 @@ function openEditor(doc) {
       editable ? h('div', { class: 'stack' },
         h('div', { class: 'grid-2' },
           select('image_layout', 'Layout', [['question', 'Big question'], ['flow', 'Process flow'], ['checklist', 'Checklist'], ['versus', 'Before / after'], ['alert', 'System message']]),
-          select('image_theme', 'Colours', [['night', 'Navy & amber'], ['paper', 'Cream & brown'], ['forest', 'Green & gold']])),
+          select('image_theme', 'Paper', [['paper', 'Notebook (off-white)'], ['blueprint', 'Blueprint (SAP blue)'], ['board', 'Board (Accenture purple)']])),
         field('image_headline', 'Headline', 'Wrap one word in *asterisks* to highlight it.'),
-        field('image_art', 'Shapes', 'Up to 3: agent, orb, human, ship, truck, car, plane, warehouse, factory, po, invoice, box, shield, calendar, cart, data, chart. Put ! before one to mark where it breaks.'),
+        field('image_art', 'Shapes', 'Up to 3: agent, human, ship, truck, car, plane, warehouse, factory, po, invoice, box, shield, calendar, cart, data, chart. Put ! before one to mark where it breaks.'),
+        field('image_flags', 'Country flags', 'Up to 4: ae, sa, qa, kw, om, bh, eg'),
+        field('image_note', 'Handwritten note', 'Points at the problem step, e.g. who clears this?'),
         h('label', { class: 'field' }, 'Items (one per line)', itemsBox,
           h('span', { class: 'hint' }, 'Flow: shape:Step — detail. Checklist: one action per line (! warning, ✕ don\'t). Before/after: 4 lines, shape:Title / text / shape:Title / text. System message: E, W or S, then the message, then Field: value lines.')),
         field('image_label', 'Label (plain text, no logos)', 'e.g. SAP S/4HANA, SAP Ariba, AI agents'),
