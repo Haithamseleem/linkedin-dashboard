@@ -137,12 +137,21 @@
     const [fx, fy] = tight ? [1.04, 1.1] : [1.12, 1.25];
     draw(rcInk().ellipse(b.cx, b.cy, b.w * fx, b.h * fy, o({ stroke: color, strokeWidth: 4.2, roughness: tight ? 1.3 : 1.8 })));
   }
-  function note(text, target, side) {
+  function note(text, target, side, area) {
     if (!text) return;
     const n = el('div', 'note', text);
     document.body.append(n);
     const t = box(target);
     const nb = () => box(n);
+    // 'margin': note sits under `area` (a box), with a straight arrow up the right margin to the target.
+    if (side === 'margin') {
+      n.style.left = `${1080 - 80 - nb().w}px`;
+      n.style.top = `${area.y + area.h + 46}px`;
+      const b = nb();
+      const x = Math.min(1010, Math.max(area.right + 30, b.x + b.w / 2));
+      arrow(x, b.y - 8, x - 6, t.y + t.h + 8, COL.note, 0.05);
+      return;
+    }
     if (side === 'above') { n.style.left = `${Math.min(1080 - 340, Math.max(60, t.cx - 120))}px`; n.style.top = `${t.y - nb().h - 90}px`; }
     else if (side === 'below') { n.style.left = `${Math.min(1080 - 340, Math.max(60, t.cx - 60))}px`; n.style.top = `${t.y + t.h + 50}px`; }
     else if (side === 'below-right') { n.style.left = `${Math.min(1080 - 320, Math.max(t.x + 400, t.x + t.w - 300))}px`; n.style.top = `${t.y + t.h + 26}px`; }
@@ -161,7 +170,14 @@
   function headline(text, height, max, min, right = 80) {
     const h = document.getElementById('headline');
     h.replaceChildren();
-    String(text || '').split(/(\*[^*]+\*)/).forEach((p) => h.append(/^\*[^*]+\*$/.test(p) ? el('em', '', p.slice(1, -1)) : document.createTextNode(p)));
+    // Hyphenated words (go-live, cut-over) stay on one line.
+    const words = (p) => p.split(/(\S+-\S+)/).map((w) => {
+      if (!/^\S+-\S+$/.test(w)) return document.createTextNode(w);
+      const s = el('span', '', w);
+      s.style.whiteSpace = 'nowrap';
+      return s;
+    });
+    String(text || '').split(/(\*[^*]+\*)/).forEach((p) => h.append(...(/^\*[^*]+\*$/.test(p) ? [el('em', '', p.slice(1, -1))] : words(p))));
     h.style.height = `${height}px`;
     h.style.right = `${right}px`;
     fit(h, max, min);
@@ -271,7 +287,19 @@
           }
         });
         const warn = rows.find((r) => r.it.flag === '!' || r.it.flag === '✕');
-        if (warn && d.note) note(d.note, warn.ct, 'below');
+        if (warn && d.note) {
+          // Below the warned row only when nothing comes after it; otherwise under the list, clear of the text.
+          if (warn === rows[rows.length - 1]) note(d.note, warn.ct, 'below');
+          else {
+            const L = box(list);
+            const right = Math.max(...rows.map(({ ct }) => {
+              const r = document.createRange();
+              r.selectNodeContents(ct);
+              return r.getBoundingClientRect().right;
+            }));
+            note(d.note, warn.ct, 'margin', { y: L.y, h: L.h, right });
+          }
+        }
       };
     },
     versus(c, d, items) {
@@ -283,9 +311,10 @@
         const side = el('div', 'side');
         side.append(shape(t.art || (k ? 'agent' : 'human'), 240));
         const st = el('div', 'st', t.label || t.text);
-        side.append(st, el('div', 'sx', items[i + 1] || ''));
+        const sx = el('div', 'sx', items[i + 1] || '');
+        side.append(st, sx);
         grid.append(side);
-        return { st };
+        return { st, sx };
       });
       const v = el('div', 'vsx', 'vs');
       c.append(grid, v);
@@ -297,7 +326,7 @@
         ink().appendChild(svgText(vb.cx, vb.cy + 18, 'vs', 56));
         const s = box(sides[1].st, 2);
         draw(rcInk().line(s.x, s.y + s.h, s.x + s.w, s.y + s.h + 4, o({ stroke: COL.note, strokeWidth: 5 })));
-        if (d.note) note(d.note, sides[1].st, 'below');
+        if (d.note) note(d.note, sides[1].sx, 'below');
       };
     },
     alert(c, d, items) {
