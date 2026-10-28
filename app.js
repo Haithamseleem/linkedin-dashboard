@@ -439,11 +439,13 @@ function openEditor(doc) {
   const itemsBox = h('textarea', { rows: 5, readonly: editable ? null : true }, String(meta.image_items || '').split('|').join('\n'));
   itemsBox.addEventListener('input', () => { meta.image_items = itemsBox.value.split('\n').map((l) => l.trim()).filter(Boolean).join('|'); refreshPreview(); });
   const frame = h('iframe', { class: 'card-frame', title: 'Image preview', tabindex: '-1' });
-  const preview = editable ? h('div', { class: 'card-preview' }, frame) : h('div');
+  // Custom images are made outside the card template, so show the saved picture instead of a card preview.
+  const custom = !isNew && meta.image_mode === 'custom';
+  const preview = editable && !custom ? h('div', { class: 'card-preview' }, frame) : h('div');
   const cardData = () => ({ layout: meta.image_layout, theme: meta.image_theme, art: meta.image_art, items: meta.image_items, label: meta.image_label, flags: meta.image_flags, note: meta.image_note, cta: meta.image_cta, kicker: meta.image_kicker, headline: meta.image_headline, footer: meta.image_footer });
   let timer;
   const refreshPreview = () => {
-    if (!editable) { preview.replaceChildren(thumb(doc)); return; }
+    if (!editable || custom) { preview.replaceChildren(thumb(doc)); return; }
     clearTimeout(timer);
     timer = setTimeout(() => { frame.src = `card.html#${encodeURIComponent(JSON.stringify(cardData()))}`; }, 150);
   };
@@ -461,7 +463,7 @@ function openEditor(doc) {
   const angle = field('angle', 'Angle (for your notes)');
   const body = h('div', { class: 'drawer-body' },
     h('div', { class: 'stack' }, preview,
-      editable ? h('div', { class: 'stack' },
+      custom ? h('p', { class: 'hint' }, 'Custom image made by Claude for this post. To change it, ask Claude; the card settings don\'t apply.') : editable ? h('div', { class: 'stack' },
         h('div', { class: 'grid-2' },
           select('image_layout', 'Layout', [['question', 'Big question'], ['flow', 'Process flow'], ['checklist', 'Checklist'], ['versus', 'Before / after'], ['alert', 'System message']]),
           select('image_theme', 'Paper', [['paper', 'Notebook (off-white)'], ['blueprint', 'Blueprint (SAP blue)'], ['board', 'Board (Accenture purple)']])),
