@@ -5,7 +5,8 @@ const OWNER = 'Haithamseleem';
 const REPO = 'linkedin-autopilot';
 const BRANCH = 'main';
 const API = 'https://api.github.com';
-const VERSION = '29 Oct c';
+const VERSION = '29 Oct d';
+const BUILD = '20261029d'; // must match the ?v= on app.js in index.html
 const TZ = 'Asia/Dubai';
 const MONTHLY_LIMIT = 15;
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -756,9 +757,22 @@ function settingsView() {
 
 // ---------- start ----------
 async function refresh() {
-  try { await loadAll(); render(); } catch (e) { toast(e.message, true); }
+  // A full reload, so a tab left open also picks up a newer version of the desk itself.
+  location.replace(`${location.pathname}?r=${Date.now()}`);
+}
+// If GitHub Pages has a newer desk than the one running (an old tab, or a cached page), load it.
+async function checkVersion() {
+  try {
+    const html = await (await fetch(`${location.pathname}?check=${Date.now()}`, { cache: 'no-store' })).text();
+    const live = html.match(/app\.js\?v=(\w+)/)?.[1];
+    if (live && live !== BUILD && sessionStorage.getItem('desk-reloaded') !== live) {
+      sessionStorage.setItem('desk-reloaded', live);
+      location.replace(`${location.pathname}?r=${Date.now()}`);
+    }
+  } catch { /* offline or blocked: keep the running version */ }
 }
 async function start() {
+  if (!state.demo) checkVersion();
   shell();
   document.getElementById('kpis').replaceChildren(h('p', { class: 'hint' }, 'Loading your posts from GitHub…'));
   try {
