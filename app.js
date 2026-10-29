@@ -5,7 +5,7 @@ const OWNER = 'Haithamseleem';
 const REPO = 'linkedin-autopilot';
 const BRANCH = 'main';
 const API = 'https://api.github.com';
-const VERSION = '29 Oct b';
+const VERSION = '29 Oct c';
 const TZ = 'Asia/Dubai';
 const MONTHLY_LIMIT = 15;
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -17,7 +17,7 @@ const STATUS = {
 const state = {
   token: sessionStorage.getItem('gh-token') || localStorage.getItem('gh-token'),
   demo: new URLSearchParams(location.search).has('demo'),
-  settings: null, posts: [], comments: [], runs: [], automation: true, user: null, pngs: new Map(),
+  settings: null, posts: [], comments: [], runs: [], audit: [], automation: true, user: null, pngs: new Map(),
   blobs: new Map(), images: new Map(), view: 'desk', tab: 'draft', hero: null, pollUntil: 0,
 };
 
@@ -195,6 +195,10 @@ async function loadAll() {
   const docs = md.map((t, i) => ({ path: t.path, sha: t.sha, ...parseDoc(texts[i]) })).sort((a, b) => b.path.localeCompare(a.path, undefined, { numeric: true }));
   state.posts = docs.filter((d) => d.path.startsWith('posts/'));
   state.comments = docs.filter((d) => d.path.startsWith('comments/'));
+  // Audit events: one small JSON file each, named by time, so newest first is a reverse sort by path.
+  const events = blobs.filter((t) => /^audit\/.+\.json$/.test(t.path)).sort((a, b) => b.path.localeCompare(a.path)).slice(0, 300);
+  state.audit = (await Promise.all(events.map((t) => readBlob(t.sha).then((s) => JSON.parse(s)).catch(() => null)))).filter(Boolean)
+    .sort((a, b) => String(b.at).localeCompare(String(a.at)));
   const [automation, runs, user] = await Promise.all([loadAutomation(), loadRuns(), state.user ? state.user : gh('/user').catch(() => ({ login: OWNER }))]);
   Object.assign(state, { automation, runs, user });
 }
@@ -382,14 +386,49 @@ function nextSunday() {
 function deskView() {
   const groups = { draft: [], scheduled: [], published: [], skipped: [] };
   for (const p of state.posts) (groups[p.meta.status] || groups.skipped).push(p);
-  const labels = { draft: 'To review', scheduled: 'Scheduled', published: 'Published', skipped: 'Skipped & other' };
-  const tabs = h('div', { class: 'tabs', role: 'group', 'aria-label': 'Filter posts' }, Object.keys(groups).map((k) =>
+  const labels = { draft: 'To review', scheduled: 'Scheduled', published: 'Published', skipped: 'Skipped & other', audit: 'Audit log' };
+  groups.audit = state.audit;
+  const tabs = h('div', { class: 'tabs', role: 'group', 'aria-label': 'Filter posts' }, Object.keys(labels).map((k) =>
     h('button', { 'aria-pressed': String(state.tab === k), onclick: () => { state.tab = k; render(); } }, labels[k], h('span', { class: 'count' }, groups[k].length))));
   const items = groups[state.tab];
-  const list = h('div', { class: 'list' }, items.length ? items.map(postCard) : h('div', { class: 'empty' }, state.tab === 'draft' ? 'No drafts waiting. The next batch arrives on Sunday.' : 'Nothing here yet.'));
+  const list = state.tab === 'audit'
+    ? auditList(state.audit, 'No events yet. Approvals, un-approvals, publishing and changes made in Publora appear here.')
+    : h('div', { class: 'list' }, items.length ? items.map(postCard) : h('div', { class: 'empty' }, state.tab === 'draft' ? 'No drafts waiting. The next batch arrives on Sunday.' : 'Nothing here yet.'));
   return h('div', { class: 'board' },
     h('section', { class: 'panel' }, h('div', { class: 'panel-head' }, h('h2', {}, 'Posts'), tabs), h('div', { class: 'panel-body' }, list)),
     h('aside', { class: 'side', id: 'side' }));
+}
+
+// ---------- audit ----------
+const AUDIT_WORDS = {
+  approved: 'Approved', unapproved: 'Un-approved (back to draft)', published: 'Published on LinkedIn', 'publish-failed': 'LinkedIn publish failed',
+  'approval-revoked': 'Approval revoked', 'scheduled-outside-desk': 'Scheduled outside the desk', 'unscheduled-outside-desk': 'Un-scheduled outside the desk',
+  'approve-failed': 'Approve failed', 'unapprove-failed': 'Un-approve failed', 'sent-to-publora-as-draft': 'Sent to Publora as a draft',
+  scheduled: 'Scheduled', unscheduled: 'Un-scheduled', 'image-replaced': 'Image replaced',
+};
+const postTitle = (p) => { const d = state.posts.find((x) => x.path === p); return d ? firstLine(d.body) : p; };
+function auditList(events, empty) {
+  if (!events.length) return h('p', { class: 'hint' }, empty);
+  const detail = (e) => [
+    e.scheduled_for ? `for ${e.scheduled_for === 'now' ? 'now' : fmtSlot(e.scheduled_for)}` : null,
+    e.was_scheduled_for ? `was set for ${fmtSlot(e.was_scheduled_for)}` : null,
+    e.reason, e.error ? `Error: ${e.error}` : null, e.evidence ? `“${e.evidence}”` : null, e.note,
+  ].filter(Boolean).join(' · ');
+  return h('ul', { class: 'audit' }, events.map((e) => h('li', { class: /failed|revoked/.test(e.action) ? 'bad' : '' },
+    h('div', { class: 'when' }, fmt(e.at, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }), e.reconstructed ? ' (from chat history)' : ''),
+    h('div', {}, h('strong', {}, AUDIT_WORDS[e.action] || e.action), ' by ', h('span', { class: 'who' }, e.who || 'unknown'), e.via ? h('span', { class: 'meta' }, ` · via ${e.via}`) : null),
+    e.post ? h('div', { class: 'meta' }, postTitle(e.post)) : null,
+    detail(e) ? h('div', { class: 'meta' }, detail(e)) : null,
+    e.run ? h('a', { href: e.run, target: '_blank', rel: 'noopener' }, 'GitHub run') : null)));
+}
+async function loadHistory(doc, box) {
+  try {
+    const commits = await gh(repoPath(`/commits?path=${encodeURIComponent(doc.path)}&sha=${BRANCH}&per_page=20`));
+    box.replaceChildren(h('ul', { class: 'audit' }, commits.map((c) => h('li', {},
+      h('div', { class: 'when' }, fmt(c.commit.author.date, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })),
+      h('div', {}, c.commit.message.split('\n')[0]),
+      h('div', { class: 'meta' }, `by ${c.author?.login || c.commit.author.name}`)))));
+  } catch (e) { box.replaceChildren(h('p', { class: 'hint' }, `Could not load the change log: ${e.message}`)); }
 }
 
 function postCard(doc) {
@@ -472,6 +511,16 @@ function openEditor(doc) {
   text.addEventListener('input', refreshChecks);
 
   const angle = field('angle', 'Angle (for your notes)');
+  // Who approved, scheduled or changed this post, and every saved version of the file.
+  let history = null;
+  if (!isNew && !state.demo) {
+    const changes = h('div', {}, h('p', { class: 'hint' }, 'Loading…'));
+    history = h('details', { class: 'history' }, h('summary', {}, 'History: who did what, and when'),
+      h('h4', {}, 'Approvals and schedule'),
+      auditList(state.audit.filter((e) => String(e.post || '').split(', ').includes(doc.path)), 'No approvals or schedule changes recorded for this post yet.'),
+      h('h4', {}, 'Change log (every saved version)'), changes);
+    history.addEventListener('toggle', () => { if (history.open && !history.dataset.loaded) { history.dataset.loaded = '1'; loadHistory(doc, changes); } });
+  }
   const body = h('div', { class: 'drawer-body' },
     h('div', { class: 'stack' }, preview,
       custom ? h('p', { class: 'hint' }, 'Custom image made by Claude for this post. To change it, ask Claude; the card settings don\'t apply.') : editable ? h('div', { class: 'stack' },
@@ -491,7 +540,7 @@ function openEditor(doc) {
         h('p', { class: 'hint' }, 'The preview shows exactly what GitHub draws after you save.')) : null),
     h('div', { class: 'stack' },
       h('div', { class: 'row' }, h('label', { class: 'field', for: 'post-text' }, 'Post text'), h('span', { class: 'spacer' }), counter),
-      text, checks, angle));
+      text, checks, angle, history));
 
   const save = async (quiet) => {
     if (!text.value.trim()) throw new Error('The post text is empty.');
@@ -536,7 +585,8 @@ function openEditor(doc) {
           if (t < Date.now() + 15 * 60000 || t > Date.now() + 7 * 86400000) throw new Error('Publora on your plan can schedule from 15 minutes up to 7 days ahead.');
           value = iso;
         }
-        if (pick === 'now' && !confirm('Publish this post on LinkedIn now?')) return;
+        const whenText = pick === 'now' ? 'NOW' : `on ${fmtSlot(pick === 'time' ? value : slot)} (UAE time)`;
+        if (!confirm(`Approve this post to go PUBLIC on LinkedIn ${whenText}?\n\n“${firstLine(text.value)}”\n\nYour GitHub name and the time are saved in the audit log. You can un-approve it until it goes out.`)) return;
         const target = text.value.trim() !== (doc?.body || '') || isNew || Object.keys(meta).some((k) => k.startsWith('image_') || k === 'angle' ? (meta[k] || '') !== (doc.meta[k] || '') : false) ? await save(true) : doc;
         await dispatch('publish.yml', { drafts: target.path, when: value });
         target.pending = pick === 'now' ? 'Publishing…' : 'Scheduling…';
@@ -553,8 +603,19 @@ function openEditor(doc) {
     if (!isNew && doc.meta.status === 'skipped') actions.push(h('button', { class: 'btn ghost', onclick: guard(async () => { meta.status = 'draft'; await save(true); toast('Back in the review list.'); close(); }) }, 'Restore to drafts'));
     if (isNew || doc.meta.status === 'draft') actions.push(h('span', { class: 'spacer' }), h('button', { class: 'btn', onclick: () => { approveBox.hidden = !approveBox.hidden; } }, 'Approve…'));
   }
+  if (!isNew && doc.meta.status === 'scheduled' && !state.demo) {
+    actions.push(h('span', { class: 'spacer' }), h('button', { class: 'btn secondary', onclick: guard(async () => {
+      if (!confirm(`Un-approve “${firstLine(doc.body)}”?\n\nIt comes off the schedule for ${fmtSlot(doc.meta.scheduledTime)} (UAE), goes back to drafts and will not publish. This is saved in the audit log.`)) return;
+      await dispatch('publish.yml', { drafts: doc.path, when: 'next-slots', action: 'unapprove' });
+      doc.pending = 'Un-approving…';
+      toast('Un-approve sent. GitHub takes it off the schedule in about a minute; the result shows in the Audit log.');
+      close();
+      render();
+    }) }, 'Un-approve (back to draft)'));
+  }
+  const approvedBy = doc?.meta.approved_by ? ` Approved by ${doc.meta.approved_by}${doc.meta.approved_at ? ` on ${fmtSlot(doc.meta.approved_at)}` : ''}.` : ' No approval is recorded for it in the desk.';
   const note = !editable ? h('div', { class: 'notice' }, doc.meta.status === 'scheduled'
-    ? `Scheduled for ${fmtSlot(doc.meta.scheduledTime)} (UAE). To change or cancel it, open the post in Publora.`
+    ? `Scheduled for ${fmtSlot(doc.meta.scheduledTime)} (UAE).${approvedBy} Un-approve it to stop it going out.`
     : doc.meta.status === 'published' ? 'Published on LinkedIn. This is the final text.' : 'This post can no longer be edited here.') : null;
   const links = !editable ? h('div', { class: 'row' },
     h('a', { class: 'btn secondary', href: 'https://app.publora.com', target: '_blank', rel: 'noopener' }, 'Open Publora'),
