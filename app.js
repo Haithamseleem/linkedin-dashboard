@@ -5,8 +5,8 @@ const OWNER = 'Haithamseleem';
 const REPO = 'linkedin-autopilot';
 const BRANCH = 'main';
 const API = 'https://api.github.com';
-const VERSION = '29 Oct d';
-const BUILD = '20261029d'; // must match the ?v= on app.js in index.html
+const VERSION = '29 Oct e';
+const BUILD = '20261029e'; // must match the ?v= on app.js in index.html
 const TZ = 'Asia/Dubai';
 const MONTHLY_LIMIT = 15;
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -18,7 +18,7 @@ const STATUS = {
 const state = {
   token: sessionStorage.getItem('gh-token') || localStorage.getItem('gh-token'),
   demo: new URLSearchParams(location.search).has('demo'),
-  settings: null, posts: [], comments: [], runs: [], audit: [], automation: true, user: null, pngs: new Map(),
+  settings: null, posts: [], comments: [], runs: [], audit: [], failures: new Map(), pendingAction: null, automation: true, user: null, pngs: new Map(),
   blobs: new Map(), images: new Map(), view: 'desk', tab: 'draft', hero: null, pollUntil: 0,
 };
 
@@ -175,7 +175,9 @@ async function writeFile(path, text, sha, message) {
 async function dispatch(workflow, inputs) {
   if (state.demo) { toast('Demo mode: nothing was sent.'); return; }
   await gh(repoPath(`/actions/workflows/${workflow}/dispatches`), { method: 'POST', body: { ref: BRANCH, inputs } });
-  state.pollUntil = Date.now() + 4 * 60000;
+  state.pendingAction = { workflow, inputs, at: Date.now() };
+  String(inputs.drafts || '').split(',').forEach((f) => state.failures.delete(f.trim()));
+  state.pollUntil = Date.now() + 6 * 60000;
   poll();
 }
 
@@ -207,7 +209,39 @@ async function loadAutomation() {
   try { return (await gh(repoPath('/actions/variables/AUTOMATION_ENABLED'))).value !== 'false'; } catch (e) { if (e.status === 404) return true; throw e; }
 }
 async function loadRuns() {
-  return (await gh(repoPath('/actions/runs?per_page=10'))).workflow_runs.map((r) => ({ name: r.name, status: r.status, conclusion: r.conclusion, created: r.created_at, url: r.html_url }));
+  return (await gh(repoPath('/actions/runs?per_page=10'))).workflow_runs.map((r) => ({ id: r.id, path: r.path, name: r.name, status: r.status, conclusion: r.conclusion, created: r.created_at, url: r.html_url }));
+}
+
+// After Approve or Un-approve: find the GitHub run it started and, if it fails, say so on the post itself.
+async function settleAction() {
+  const p = state.pendingAction;
+  if (!p) return;
+  const run = state.runs.find((r) => String(r.path || '').endsWith(p.workflow) && new Date(r.created).getTime() >= p.at - 15000);
+  if (!run || run.status !== 'completed') return;
+  state.pendingAction = null;
+  const files = String(p.inputs.drafts || '').split(',').map((s) => s.trim()).filter(Boolean);
+  const verb = p.inputs.action === 'unapprove' ? 'Un-approve' : 'Approval';
+  if (run.conclusion === 'success') {
+    files.forEach((f) => state.failures.delete(f));
+    toast(`${verb} done on GitHub.`);
+    return;
+  }
+  let step = '';
+  try { step = (await gh(repoPath(`/actions/runs/${run.id}/jobs`))).jobs.flatMap((j) => j.steps).find((s) => s.conclusion === 'failure')?.name || ''; } catch { /* keep going without the step name */ }
+  files.forEach((f) => state.failures.set(f, { verb, action: p.inputs.action || 'approve', step, url: run.url, at: p.at }));
+  toast(`${verb} failed on GitHub${step ? ` at “${step}”` : ''}. Nothing changed on LinkedIn. The post shows the reason.`, true);
+}
+// The failure to show on a post: from this session, or the latest audit event if it is a failure.
+function failureOf(doc) {
+  const events = state.audit.filter((e) => String(e.post || '').split(', ').includes(doc.path));
+  const latest = events[0];
+  const seen = state.failures.get(doc.path);
+  const fromAudit = latest && /-failed$/.test(latest.action) ? { verb: latest.action.startsWith('unapprove') ? 'Un-approve' : 'Approval', reason: latest.error, url: latest.run, at: Date.parse(latest.at) } : null;
+  const err = doc.meta.last_error || '';
+  const fromPost = err ? { verb: err.startsWith('unapprove') ? 'Un-approve' : 'Approval', reason: err.replace(/^\w+: /, ''), at: Date.parse(doc.meta.last_error_at) || 0 } : null;
+  if (!seen) return fromAudit || fromPost;
+  const reason = events.find((e) => /-failed$/.test(e.action) && Date.parse(e.at) >= seen.at - 60000)?.error;
+  return { ...seen, reason: reason || (/publora/i.test(seen.step) ? 'GitHub could not reach Publora. Usually the PUBLORA_API_KEY secret is missing or wrong (linkedin-autopilot › Settings › Secrets and variables › Actions).' : '') };
 }
 async function setAutomation(on) {
   if (state.demo) { state.demoAutomation = on; return; }
@@ -223,6 +257,7 @@ async function poll() {
       await new Promise((r) => setTimeout(r, 10000));
       state.runs = await loadRuns();
       renderSide();
+      await settleAction();
       if (!state.runs.some((r) => r.status !== 'completed') && Date.now() > state.pollUntil - 3 * 60000) {
         await loadAll();
         render();
@@ -432,6 +467,14 @@ async function loadHistory(doc, box) {
   } catch (e) { box.replaceChildren(h('p', { class: 'hint' }, `Could not load the change log: ${e.message}`)); }
 }
 
+function failureNote(doc) {
+  const f = failureOf(doc);
+  if (!f) return null;
+  return h('div', { class: 'fail-note', role: 'alert' }, h('strong', {}, `${f.verb} failed`), f.at ? ` · ${fmtSlot(new Date(f.at).toISOString())}` : '',
+    h('div', {}, f.reason || (f.step ? `GitHub stopped at “${f.step}”.` : 'GitHub could not finish it.'), ' Nothing changed on LinkedIn.'),
+    f.url ? h('a', { href: f.url, target: '_blank', rel: 'noopener', onclick: (e) => e.stopPropagation() }, 'GitHub run') : null);
+}
+
 function postCard(doc) {
   const issues = state.settings ? lint(doc.body) : [];
   const when = doc.meta.scheduledTime ? fmtSlot(doc.meta.scheduledTime) : `Drafted ${doc.meta.created || ''}`;
@@ -439,6 +482,7 @@ function postCard(doc) {
     thumb(doc),
     h('div', {},
       h('div', { class: 'row' }, doc.pending ? h('span', { class: 'pill pending' }, h('span', { 'aria-hidden': 'true' }, '◷'), doc.pending) : pill(doc.meta.status), h('span', { class: 'meta' }, when)),
+      failureNote(doc),
       h('h3', {}, firstLine(doc.body)),
       h('p', { class: 'angle' }, doc.meta.angle || ''),
       h('div', { class: 'row meta' }, `${[...doc.body].length} characters`, doc.meta.status === 'draft' ? (issues.length ? h('span', {}, `· ${issues.length} check${issues.length > 1 ? 's' : ''} to fix`) : h('span', {}, '· checks passed')) : null)));
@@ -627,7 +671,7 @@ function openEditor(doc) {
     h('section', { class: 'drawer', role: 'dialog', 'aria-modal': 'true', 'aria-label': isNew ? 'Write a post' : 'Edit draft' },
       h('div', { class: 'drawer-head' }, isNew ? pill('draft', 'New post') : pill(doc.meta.status), h('h2', {}, isNew ? 'Write a post' : firstLine(doc.body)), h('button', { class: 'btn ghost', onclick: close, 'aria-label': 'Close' }, '✕')),
       body,
-      h('div', { class: 'drawer-foot' }, note, links, ...actions, approveBox)));
+      h('div', { class: 'drawer-foot' }, isNew ? null : failureNote(doc), note, links, ...actions, approveBox)));
   refreshPreview();
   refreshChecks();
   (editable ? text : root.querySelector('.drawer-head button')).focus();
@@ -782,6 +826,11 @@ async function start() {
     if (e.status === 401) { localStorage.removeItem('gh-token'); sessionStorage.removeItem('gh-token'); state.token = null; signIn(); }
     toast(e.message, true);
   }
+  // Keep the desk current on its own: every 2 minutes while the tab is visible and no post is open for editing.
+  if (!state.demo) setInterval(() => {
+    if (document.visibilityState !== 'visible' || document.querySelector('.drawer') || state.polling) return;
+    loadAll().then(render).catch(() => {});
+  }, 120000);
 }
 
 if (state.demo || state.token) start(); else signIn();

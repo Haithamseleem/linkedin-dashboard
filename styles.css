@@ -218,3 +218,5 @@ textarea.code { min-height: 260px; font: 13px/1.55 Consolas, "Cascadia Mono", mo
 .history { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
 .history summary { cursor: pointer; font-weight: 600; }
 .history h4 { margin: 12px 0 6px; font-size: 13px; }
+.fail-note { margin: 6px 0; padding: 8px 10px; border-radius: 10px; background: var(--bad-soft); color: var(--bad); font-size: 13px; display: grid; gap: 3px; text-align: left; }
+.fail-note a { color: inherit; text-decoration: underline; }
