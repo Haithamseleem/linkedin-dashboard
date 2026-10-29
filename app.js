@@ -5,8 +5,8 @@ const OWNER = 'Haithamseleem';
 const REPO = 'linkedin-autopilot';
 const BRANCH = 'main';
 const API = 'https://api.github.com';
-const VERSION = '29 Oct e';
-const BUILD = '20261029e'; // must match the ?v= on app.js in index.html
+const VERSION = '29 Oct f';
+const BUILD = '20261029f'; // must match the ?v= on app.js in index.html
 const TZ = 'Asia/Dubai';
 const MONTHLY_LIMIT = 15;
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -359,7 +359,7 @@ function render() {
   renderNav();
   renderKpis();
   const view = document.getElementById('view');
-  view.replaceChildren(state.view === 'desk' ? deskView() : state.view === 'comments' ? commentsView() : settingsView());
+  view.replaceChildren(state.view === 'desk' ? deskView() : state.view === 'calendar' ? calendarView() : state.view === 'comments' ? commentsView() : settingsView());
   if (state.view === 'desk') renderSide();
   state.hero?.setCount(state.posts.filter((p) => p.meta.status === 'draft').length);
 }
@@ -381,12 +381,81 @@ function renderHeaderActions() {
 function renderNav() {
   const tab = (id, label) => h('button', { 'aria-current': state.view === id ? 'page' : null, onclick: () => { state.view = id; render(); } }, label);
   document.getElementById('nav').replaceChildren(
-    tab('desk', 'Drafts & schedule'), tab('comments', 'Comments'), tab('settings', 'Settings'),
+    tab('desk', 'Drafts & schedule'), tab('calendar', 'Calendar'), tab('comments', 'Comments'), tab('settings', 'Settings'),
     h('span', { class: 'spacer' }),
     h('span', { class: 'who' }, `Signed in as ${state.user?.login || '…'} · `,
       h('a', { href: '#', onclick: (e) => { e.preventDefault(); refresh(); } }, 'Refresh'), ' · ',
       h('a', { href: '#', onclick: (e) => { e.preventDefault(); localStorage.removeItem('gh-token'); sessionStorage.removeItem('gh-token'); location.href = location.pathname; } }, state.demo ? 'Leave demo' : 'Sign out'),
       ` · desk ${VERSION}`));
+}
+
+// ---------- calendar ----------
+// A month view (UAE time, weeks start on Monday) of what went out and what is booked, plus the open posting slots.
+const ymd = (iso) => new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
+function calendarView() {
+  const today = ymd(new Date().toISOString());
+  if (!state.calMonth) state.calMonth = today.slice(0, 7);
+  const [y, m] = state.calMonth.split('-').map(Number);
+  const shift = (n) => { const d = new Date(Date.UTC(y, m - 1 + n, 1)); state.calMonth = d.toISOString().slice(0, 7); render(); };
+  const title = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(y, m - 1, 1)));
+
+  const dated = state.posts.filter((p) => ['scheduled', 'published'].includes(p.meta.status) && p.meta.scheduledTime);
+  const byDay = new Map();
+  for (const p of dated) { const k = ymd(p.meta.scheduledTime); byDay.set(k, [...(byDay.get(k) || []), p]); }
+  for (const list of byDay.values()) list.sort((a, b) => a.meta.scheduledTime.localeCompare(b.meta.scheduledTime));
+  const taken = new Set(dated.map((p) => Math.round(new Date(p.meta.scheduledTime).getTime() / 60000)));
+  const [, sign, hh, mm] = (state.settings?.utcOffset || '+04:00').match(/([+-])(\d\d):(\d\d)/);
+  const offset = (sign === '-' ? -1 : 1) * (Number(hh) * 60 + Number(mm)) * 60000;
+
+  const first = new Date(Date.UTC(y, m - 1, 1));
+  const lead = (first.getUTCDay() + 6) % 7;
+  const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const cells = Math.ceil((lead + daysInMonth) / 7) * 7;
+  const grid = h('div', { class: 'cal-grid', role: 'grid', 'aria-label': `Posts in ${title}` },
+    ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => h('div', { class: 'cal-dow', role: 'columnheader' }, d)));
+  for (let i = 0; i < cells; i++) {
+    const d = new Date(Date.UTC(y, m - 1, 1 - lead + i));
+    const key = d.toISOString().slice(0, 10);
+    const inMonth = d.getUTCMonth() === m - 1;
+    const posts = byDay.get(key) || [];
+    const cell = h('div', { class: `cal-day${inMonth ? '' : ' out'}${key === today ? ' today' : ''}${key < today ? ' past' : ''}`, role: 'gridcell' },
+      h('div', { class: 'cal-num' }, String(d.getUTCDate())));
+    for (const p of posts) {
+      const thumb = h('span', { class: 'cal-thumb' });
+      imageUrl(p).then((url) => { if (url) thumb.append(h('img', { src: url, alt: '' })); }).catch(() => {});
+      cell.append(h('button', { class: `cal-post ${p.meta.status}`, title: firstLine(p.body), onclick: () => openEditor(p) },
+        thumb,
+        h('span', { class: 'cal-txt' },
+          h('span', { class: 'cal-time' }, `${fmt(p.meta.scheduledTime, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })} · ${p.meta.status === 'published' ? 'Published' : 'Scheduled'}`),
+          h('span', { class: 'cal-title' }, firstLine(p.body)))));
+    }
+    // Open posting slots from Settings, for days still ahead
+    if (inMonth && key >= today && state.settings) {
+      for (const s of state.settings.slots.filter((x) => x.day === DAYS[d.getUTCDay()])) {
+        const [hr, mi] = s.time.split(':').map(Number);
+        const t = Date.UTC(y, m - 1, d.getUTCDate(), hr, mi) - offset;
+        if (t > Date.now() && !taken.has(Math.round(t / 60000))) cell.append(h('div', { class: 'cal-free' }, `${s.time} free slot`));
+      }
+    }
+    grid.append(cell);
+  }
+
+  const inView = dated.filter((p) => ymd(p.meta.scheduledTime).startsWith(state.calMonth));
+  const drafts = state.posts.filter((p) => p.meta.status === 'draft').length;
+  return h('section', { class: 'panel cal' },
+    h('div', { class: 'panel-head' },
+      h('h2', {}, title),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn ghost', onclick: () => shift(-1), 'aria-label': 'Previous month' }, '‹'),
+        h('button', { class: 'btn ghost', onclick: () => { state.calMonth = today.slice(0, 7); render(); } }, 'Today'),
+        h('button', { class: 'btn ghost', onclick: () => shift(1), 'aria-label': 'Next month' }, '›'))),
+    h('div', { class: 'panel-body' },
+      h('div', { class: 'cal-legend' },
+        h('span', { class: 'lg published' }, `Published · ${inView.filter((p) => p.meta.status === 'published').length}`),
+        h('span', { class: 'lg scheduled' }, `Scheduled · ${inView.filter((p) => p.meta.status === 'scheduled').length}`),
+        h('span', { class: 'lg free' }, 'Free slot'),
+        h('span', { class: 'meta' }, `All times UAE. ${drafts} draft${drafts === 1 ? '' : 's'} waiting in “To review”. Publora schedules up to 7 days ahead.`)),
+      grid));
 }
 
 function renderKpis() {
