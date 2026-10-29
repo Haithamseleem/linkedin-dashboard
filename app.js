@@ -5,6 +5,7 @@ const OWNER = 'Haithamseleem';
 const REPO = 'linkedin-autopilot';
 const BRANCH = 'main';
 const API = 'https://api.github.com';
+const VERSION = '29 Oct b';
 const TZ = 'Asia/Dubai';
 const MONTHLY_LIMIT = 15;
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -231,8 +232,13 @@ async function imageUrl(doc) {
   const sha = state.pngs.get(imagePath(doc));
   if (!sha) return null;
   if (!state.images.has(sha)) {
-    const blob = await gh(repoPath(`/git/blobs/${sha}`));
-    state.images.set(sha, URL.createObjectURL(new Blob([b64bytes(blob.content)], { type: 'image/png' })));
+    // Raw bytes instead of base64 JSON: a third of the download for the large scene images.
+    // A blob never changes for a given sha, so the browser may cache it.
+    const res = await fetch(`${API}${repoPath(`/git/blobs/${sha}`)}`, {
+      headers: { Authorization: `Bearer ${state.token}`, Accept: 'application/vnd.github.raw+json', 'X-GitHub-Api-Version': '2022-11-28' },
+    });
+    if (!res.ok) throw new Error(`GitHub ${res.status}`);
+    state.images.set(sha, URL.createObjectURL(new Blob([await res.arrayBuffer()], { type: 'image/png' })));
   }
   return state.images.get(sha);
 }
@@ -246,7 +252,11 @@ function thumb(doc, fields) {
   const mock = h('div', { class: 'mock' }, h('div', { class: 'bar' }), h('div', { class: 'k' }, meta.image_kicker || ''), headline, h('div', { class: 'ft' }, meta.image_footer || ''));
   box.append(mock);
   if (!fields && meta.image_mode !== 'none') {
-    imageUrl(doc).then((url) => { if (url) { mock.remove(); box.append(h('img', { src: url, alt: `Post image: ${meta.image_headline || ''}` })); } }).catch(() => {});
+    const status = h('div', { class: 'ft' }, 'Loading image…');
+    if (!state.demo && meta.image_file) mock.append(status);
+    imageUrl(doc)
+      .then((url) => { if (url) { mock.remove(); box.append(h('img', { src: url, alt: `Post image: ${meta.image_headline || ''}` })); } else status.textContent = 'No image yet'; })
+      .catch((e) => { status.textContent = `Image didn't load (${e.message}). Use Refresh.`; });
   }
   if (meta.image_mode === 'none') { box.replaceChildren(h('div', { class: 'mock' }, h('div', { class: 'ft' }, 'No image'))); }
   return box;
@@ -335,7 +345,8 @@ function renderNav() {
     h('span', { class: 'spacer' }),
     h('span', { class: 'who' }, `Signed in as ${state.user?.login || '…'} · `,
       h('a', { href: '#', onclick: (e) => { e.preventDefault(); refresh(); } }, 'Refresh'), ' · ',
-      h('a', { href: '#', onclick: (e) => { e.preventDefault(); localStorage.removeItem('gh-token'); sessionStorage.removeItem('gh-token'); location.href = location.pathname; } }, state.demo ? 'Leave demo' : 'Sign out')));
+      h('a', { href: '#', onclick: (e) => { e.preventDefault(); localStorage.removeItem('gh-token'); sessionStorage.removeItem('gh-token'); location.href = location.pathname; } }, state.demo ? 'Leave demo' : 'Sign out'),
+      ` · desk ${VERSION}`));
 }
 
 function renderKpis() {
